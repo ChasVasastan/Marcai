@@ -4,7 +4,7 @@ A physical music box that calls a API connected to an AI music generator that ge
 # Build
 
 ```
-export PICO_SDK_PATH=path/to/pico-sdk
+git submodule update --init
 cmake -S . -B build
 cmake --build build
 ```
