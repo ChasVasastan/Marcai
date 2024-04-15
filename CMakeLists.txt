@@ -1,7 +1,4 @@
 cmake_minimum_required(VERSION 3.22)
-set(ENV{PICO_SDK_PATH} ${CMAKE_SOURCE_DIR}/lib/pico-sdk)
-set(ENV{PICO_EXTRAS_PATH} ${CMAKE_SOURCE_DIR}/lib/pico-extras)
-
 include(pico_sdk_import.cmake)
 include(pico_extras_import.cmake)
 
