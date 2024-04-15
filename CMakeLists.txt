@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
-set(ENV{PICO_SDK_PATH} ../lib/pico-sdk)
-set(ENV{PICO_EXTRAS_PATH} ../lib/pico-extras)
+set(ENV{PICO_SDK_PATH} ${CMAKE_SOURCE_DIR}/lib/pico-sdk)
+set(ENV{PICO_EXTRAS_PATH} ${CMAKE_SOURCE_DIR}/lib/pico-extras)
 
 include(pico_sdk_import.cmake)
 include(pico_extras_import.cmake)
@@ -23,6 +23,7 @@ pico_enable_stdio_uart(${PROJECT_NAME} 1)
 pico_add_extra_outputs(${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
