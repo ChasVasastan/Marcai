@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 include(pico_sdk_import.cmake)
-include(pico_extras_import.cmake)
+# include(pico_extras_import.cmake)
 
 set(ENV{PICO_BOARD} pico_w)
 
@@ -26,4 +26,5 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_stdlib
   pico_multicore
+  pico_cyw43_arch_none
 )
