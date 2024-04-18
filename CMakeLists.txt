@@ -33,6 +33,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_audio_i2s
   picomp3lib
   pico_cyw43_arch_none
+  pico_cyw43_arch_lwip_threadsafe_background
 )
 
 add_custom_target(${PROJECT_NAME}_flash
