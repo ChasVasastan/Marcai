@@ -34,6 +34,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   picomp3lib
   pico_cyw43_arch_none
   pico_cyw43_arch_lwip_threadsafe_background
+  pico_lwip_mbedtls
+  pico_mbedtls
 )
 
 add_custom_target(${PROJECT_NAME}_flash
@@ -41,3 +43,4 @@ add_custom_target(${PROJECT_NAME}_flash
   DEPENDS ${PROJECT_NAME}
   COMMENT "Flashing board..."
 )
+
