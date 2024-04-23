@@ -4,7 +4,8 @@
 #include "pico/cyw43_arch.h"
 #include "lwipopts.h"
 
-#include "lwip/tcp.h"
+#include "lwip/altcp.h"
+#include "lwip/altcp_tls.h"
 
 char ssid[] = "ssid";
 char pass[] = "pass";
@@ -12,32 +13,33 @@ char pass[] = "pass";
 #define BUF_SIZE 2048
 
 char myBuff[BUF_SIZE];
-char header[] = "GET / HTTP/1.1\r\nHOST: google.com\r\n\r\n";
+char header[] = "GET / HTTP/1.1\r\nHOST: catfact.ninja\r\n\r\n";
 
-err_t recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
+err_t recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
 {
     if (p != NULL)
     {
-        printf("recv total %d  this buffer %dnext %d err %d\n", p->tot_len, p->len, p->next, err);
+       printf("recv total %dthis buffer %d next %d err %d\n", p->tot_len, p->len, p->next, err);
         pbuf_copy_partial(p, myBuff, p->tot_len, 0);
         myBuff[p->tot_len] = 0;
         printf("Buffer= %s\n", myBuff);
-        tcp_recved(pcb, p->tot_len);
+        altcp_recved(pcb, p->tot_len);
         pbuf_free(p);
     }
     return ERR_OK;
 }
 
-err_t connected(void *arg, struct tcp_pcb *pcb, err_t err)
+static err_t altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err)
 {
     if (err == ERR_OK)
     {
-        err = tcp_write(pcb, header, strlen(header), 0);
-        err = tcp_output(pcb);
-    } else {
+        err = altcp_write(pcb, header, strlen(header), 0);
+        err = altcp_output(pcb);
+    }
+    else
+    {
         printf("Error on connect: %d\n", err);
     }
-
     return ERR_OK;
 }
 
@@ -71,13 +73,15 @@ int main()
         printf("connect wifi error\n");
     }
 
-    struct tcp_pcb *pcb = tcp_new();
-    tcp_recv(pcb, recv);
+    struct altcp_tls_config *tls_config = altcp_tls_create_config_client(NULL, 0);
+    struct altcp_pcb *pcb = altcp_tls_new(tls_config, IPADDR_TYPE_ANY);
+    mbedtls_ssl_set_hostname((mbedtls_ssl_context*)altcp_tls_context(pcb), "catfact.ninja");
+    altcp_recv(pcb, recv);
     ip_addr_t ip;
     // implement dynamics dns get otherwise you need to manually change ipv4
-    IP4_ADDR(&ip, 172, 217, 12, 110);
+    IP4_ADDR(&ip, 104, 131, 8, 184);
     cyw43_arch_lwip_begin();
-    err_t err = tcp_connect(pcb, &ip, 80, connected);
+    err_t err = altcp_connect(pcb, &ip, 443, altcp_client_connected);
     cyw43_arch_lwip_end();
     while (true)
     {
