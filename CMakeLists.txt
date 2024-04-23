@@ -28,3 +28,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_multicore
   pico_cyw43_arch_none
 )
+
+add_custom_target(${PROJECT_NAME}_flash
+  COMMAND picotool load --force ${CMAKE_BINARY_DIR}/marcai.elf
+  DEPENDS ${PROJECT_NAME}
+  COMMENT "Flashing board..."
+)
