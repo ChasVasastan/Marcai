@@ -64,3 +64,8 @@
 // The following is needed to parse a certificate
 #define MBEDTLS_PEM_PARSE_C
 #define MBEDTLS_BASE64_C
+
+// NEW
+
+//encryption
+#define MBEDTLS_CCM_C
