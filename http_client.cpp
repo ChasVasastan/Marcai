@@ -36,8 +36,7 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
     }
 
     // TODO: Test this call and try to extract the mp3 file
-    // https://storage.googleapis.com/udio-artifacts-c33fe3ba-3ffe-471f-92c8-5dfef90b3ea3/samples/8ecb5ec94c774b04bdb3fd66d39c1b2b/1/Cosmic%20Canine%20Cruise.mp3
-
+    // Encode the octect format(binary) or try sending it directly to the encoder
     printf("Recv total %d This buffer %d Next %d Error %d\n", p->tot_len, p->len, p->next, err);
 
     // Copies data to the buffer
