@@ -19,3 +19,10 @@ cmake --build build
 
 After this, there is a .uf2 file in the build directory that you copy
 to the Raspberry Pi Pico.
+
+Optionally if [picotool](https://github.com/raspberrypi/picotool) is installed,
+build target marcai_flash to flash the device.
+
+```
+cmake --build build --target marcai_flash
+```
