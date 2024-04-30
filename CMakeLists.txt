@@ -13,6 +13,8 @@ pico_sdk_init()
 add_executable(${PROJECT_NAME}
   marcai.cpp
   audio.cpp
+  wifi.cpp
+  http_client.cpp
 )
 
 add_subdirectory(lib/picomp3lib/src)
