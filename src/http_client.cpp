@@ -8,26 +8,20 @@
 #include "lwip/dns.h"
 #include "lwip/altcp_tls.h"
 
-// Global instance
-Http_client global_client;
-
 Http_client::Http_client()
 {
-    memset(global_client.myBuff, 0, BUF_SIZE);
-    memset(global_client.header, 0, BUF_SIZE / 2);
 }
 
 void Http_client::http_get(char *website, char *api_endpoint)
 {
-    snprintf(global_client.header, sizeof(global_client.header), "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n", api_endpoint, website);
-    printf("HTTP Header: %s", global_client.header);
+    snprintf(header, sizeof(header), "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n", api_endpoint, website);
+    printf("HTTP Header: %s", header);
 }
 
 // Function to handle data being transmitted
 err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
 {
-    // Refer to the global_client
-    Http_client *client = &global_client;
+    Http_client *client = reinterpret_cast<Http_client*>(arg);
 
     if (p == NULL)
     {
@@ -37,7 +31,7 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
 
     // TODO: Test this call and try to extract the mp3 file
     // Encode the octect format(binary) or try sending it directly to the encoder
-    printf("Recv total %d This buffer %d Next %d Error %d\n", p->tot_len, p->len, p->next, err);
+    printf("Recv total %d This buffer %d Next %p Error %d\n", p->tot_len, p->len, p->next, err);
 
     // Copies data to the buffer
     pbuf_copy_partial(p, client->myBuff, p->tot_len, 0);
@@ -56,8 +50,7 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
 // Function to handle connection events
 err_t Http_client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err)
 {
-    // Refer to the global_client
-    Http_client *client = &global_client;
+    Http_client *client = reinterpret_cast<Http_client*>(arg);
 
     if (err == ERR_OK)
     {
@@ -75,17 +68,16 @@ err_t Http_client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_
 // Function to set up TLS
 void Http_client::tls_tcp_setup(const char *website)
 {
-    Http_client *client = &global_client;
-
     // Set up TLS
     struct altcp_tls_config *tls_config = altcp_tls_create_config_client(NULL, 0);
     struct altcp_pcb *pcb = altcp_tls_new(tls_config, IPADDR_TYPE_ANY);
     altcp_recv(pcb, recv);
+    altcp_arg(pcb, this);
 
     // Connect to host with TLS/TCP
-    printf("Attempting to connect to %s with IP address %s\n", website, ipaddr_ntoa(&client->resolved_ip));
+    printf("Attempting to connect to %s with IP address %s\n", website, ipaddr_ntoa(&resolved_ip));
     mbedtls_ssl_set_hostname((mbedtls_ssl_context *)altcp_tls_context(pcb), website);
-    err_t err = altcp_connect(pcb, &client->resolved_ip, 443, altcp_client_connected);
+    err_t err = altcp_connect(pcb, &resolved_ip, 443, altcp_client_connected);
     if (err != ERR_OK)
     {
         printf("TLS connection failed, erro: %d\n", err);
@@ -93,9 +85,9 @@ void Http_client::tls_tcp_setup(const char *website)
 }
 
 // Callback for DNS lookup
-void Http_client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr, void *callback_arg)
+void Http_client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr, void *arg)
 {
-    Http_client *client = &global_client;
+    Http_client *client = reinterpret_cast<Http_client*>(arg);
     if (ipaddr != NULL)
     {
         printf("DNS lookup successful: %s, IP address is %s\n", name, ipaddr_ntoa(ipaddr));
@@ -112,15 +104,15 @@ void Http_client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr
 void Http_client::resolve_dns(const char *hostname)
 {
     ip_addr_t addr;
-    err_t err = dns_gethostbyname(hostname, &addr, dns_resolve_callback, NULL);
+    err_t err = dns_gethostbyname(hostname, &addr, dns_resolve_callback, this);
     if (err == ERR_INPROGRESS)
     {
         printf("DNS resolution in progress...\n");
     }
     else if (err == ERR_OK)
     {
-        global_client.ip_resolved = true;
-        global_client.resolved_ip = addr;
+        ip_resolved = true;
+        resolved_ip = addr;
         printf("Target IP: %s\n", ipaddr_ntoa(&resolved_ip));
     }
     else
@@ -150,15 +142,15 @@ void Http_client::set_ip_resolved(bool status)
 // Getters
 char *Http_client::get_my_buff()
 {
-    return global_client.myBuff;
+    return myBuff;
 }
 
 char *Http_client::get_header()
 {
-    return global_client.header;
+    return header;
 }
 
 bool Http_client::is_ip_resolved()
 {
-    return global_client.ip_resolved;
+    return ip_resolved;
 }
