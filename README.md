@@ -12,6 +12,8 @@ for your system.
 Clone the repository and run
 
 ```
+export WIFI_SSID=YourWiFiSSID
+export WIFI_PASS=YourSecretPassword
 git submodule update --init
 cmake -S . -B build
 cmake --build build
