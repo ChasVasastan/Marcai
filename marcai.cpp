@@ -21,7 +21,7 @@ int main()
   {
   }
 
-  if (!Wifi::connect_wifi("ssid", "pass"))
+  if (!Wifi::connect_wifi())
   {
     printf("Connect wifi error\n");
   }
