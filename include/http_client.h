@@ -1,3 +1,5 @@
+#include <map>
+#include <string>
 #ifndef HTTP_CLIENT_H
 #define HTTP_CLIENT _H
 
@@ -16,6 +18,11 @@ private:
   char header[BUF_SIZE / 2];
   bool ip_resolved = false;
   ip_addr_t resolved_ip;
+
+  unsigned int http_status;
+  std::string http_version;
+  std::map<std::string, std::string> reply_headers;
+  bool reply_headers_complete;
 
 public:
   // Setters
@@ -36,6 +43,37 @@ public:
   static void dns_resolve_callback(const char *name, const ip_addr_t *ipaddr, void *callback_arg);
   void resolve_dns(const char *hostname);
   void tls_tcp_setup(const char *website);
+
+  bool received_status() {
+    return http_status > 0;
+  }
+
+  bool received_headers() {
+    return reply_headers_complete;
+  }
+
+  void set_received_headers() {
+    reply_headers_complete = true;
+  }
+
+  void set_status(int status) {
+    http_status = status;
+  }
+
+  void set_version(std::string version) {
+    http_version = version;
+  }
+
+  std::map<std::string, std::string>& get_reply_headers() {
+    return reply_headers;
+  }
+
+  void add_header(std::string key, std::string value) {
+    // make header key lowercase
+    for (char &c : key)
+      c = std::tolower(c);
+    reply_headers[key] = value;
+  }
 };
 
 #endif /* HTTP_CLIENT_H */
