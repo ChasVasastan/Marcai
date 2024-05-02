@@ -34,7 +34,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_multicore
   pico_audio_i2s
   picomp3lib
-  pico_cyw43_arch_none
   pico_cyw43_arch_lwip_threadsafe_background
   pico_lwip_http
   pico_lwip_mbedtls
@@ -47,3 +46,22 @@ add_custom_target(${PROJECT_NAME}_flash
   COMMENT "Flashing board..."
 )
 
+if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/credentials.cmake)
+  include(credentials.cmake)
+else()
+  if (DEFINED ENV{WIFI_SSID})
+    target_compile_definitions(${PROJECT_NAME}
+      PRIVATE WIFI_SSID=\"$ENV{WIFI_SSID}\"
+    )
+  else()
+    message(FATAL_ERROR "WIFI_SSID not found")
+  endif()
+
+  if (DEFINED ENV{WIFI_PASS})
+    target_compile_definitions(${PROJECT_NAME}
+      PRIVATE WIFI_PASS=\"$ENV{WIFI_PASS}\"
+    )
+  else()
+    message(FATAL_ERROR "WIFI_PASS not found")
+  endif()
+endif()

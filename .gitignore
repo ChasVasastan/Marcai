@@ -14,3 +14,4 @@ build/
 .cache/
 task.json
 .vscode/
+credentials.cmake
