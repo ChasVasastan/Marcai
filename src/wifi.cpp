@@ -3,19 +3,19 @@
 #include "pico/cyw43_arch.h"
 
   // Function to connec to wifi
-  bool Wifi::connect_wifi()
-  {
-    cyw43_arch_enable_sta_mode();
+bool Wifi::connect(std::string ssid, std::string pass)
+{
+  cyw43_arch_enable_sta_mode();
 
-    printf("Connecting to %s\n", WIFI_SSID);
-    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASS, CYW43_AUTH_WPA2_AES_PSK, 30000))
-    {
-      printf("Failed to connect :(\n");
+  printf("Connecting to %s\n", ssid.c_str());
+  if (cyw43_arch_wifi_connect_timeout_ms(ssid.c_str(), pass.c_str(),
+                                         CYW43_AUTH_WPA2_AES_PSK, 30000)) {
+    printf("Failed to connect :(\n");
 
-      return false;
-    }
-
-    printf("Connected to %s\n", WIFI_SSID);
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-    return true;
+    return false;
   }
+
+  printf("Connected to %s\n", ssid.c_str());
+  cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+  return true;
+}
