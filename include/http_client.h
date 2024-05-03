@@ -3,7 +3,7 @@
 #ifndef HTTP_CLIENT_H
 #define HTTP_CLIENT _H
 
-#define BUF_SIZE 2048
+#define BUF_SIZE 4096
 
 #include "pico/stdlib.h"
 
@@ -14,6 +14,7 @@ class Http_client
 {
 
 private:
+  int buffer_available;
   char myBuff[BUF_SIZE];
   char header[BUF_SIZE / 2];
   bool ip_resolved = false;
@@ -21,8 +22,9 @@ private:
 
   unsigned int http_status;
   std::string http_version;
-  std::map<std::string, std::string> reply_headers;
-  bool reply_headers_complete;
+  unsigned int http_content_length;;
+  std::map<std::string, std::string> response_headers;
+  bool response_headers_complete;
 
 public:
   // Setters
@@ -49,30 +51,37 @@ public:
   }
 
   bool received_headers() {
-    return reply_headers_complete;
+    return response_headers_complete;
   }
 
   void set_received_headers() {
-    reply_headers_complete = true;
+    response_headers_complete = true;
+    if (response_headers.count("content-length") > 0) {
+      http_content_length = std::atoi(response_headers["content-length"].c_str());
+    }
   }
 
   void set_status(int status) {
     http_status = status;
   }
 
+  int content_length() {
+    return http_content_length;
+  }
+
   void set_version(std::string version) {
     http_version = version;
   }
 
-  std::map<std::string, std::string>& get_reply_headers() {
-    return reply_headers;
+  std::map<std::string, std::string>& get_response_headers() {
+    return response_headers;
   }
 
   void add_header(std::string key, std::string value) {
     // make header key lowercase
     for (char &c : key)
       c = std::tolower(c);
-    reply_headers[key] = value;
+    response_headers[key] = value;
   }
 };
 

@@ -4,6 +4,8 @@
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 
+#include "audio.h"
+
 #include "lwipopts.h"
 #include "lwip/altcp.h"
 #include "lwip/dns.h"
@@ -11,10 +13,14 @@
 #include <map>
 #include <string>
 
+extern Audio g_audio;
+
 Http_client::Http_client()
 {
   http_status = 0;
-  reply_headers_complete = false;
+  response_headers_complete = false;
+  http_content_length = -1;
+  buffer_available = 0;
 }
 
 void Http_client::http_get(char *website, char *api_endpoint)
@@ -41,7 +47,7 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
     if (!client->received_status()) {
       uint16_t end = pbuf_memfind(p, "\r\n", 2, 0);
       if (end < 0xffff) {
-        std::string status_line(end, 0);
+        std::string status_line(end, '\0');
         pbuf_copy_partial(p, status_line.data(), end, 0);
         if (auto npos = status_line.find(" "); npos != std::string::npos) {
           std::string version = status_line.substr(0, npos);
@@ -72,7 +78,7 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
             client->set_received_headers();
             putchar('\n');
 
-            for (auto [k,v] : client->get_reply_headers()) {
+            for (auto [k,v] : client->get_response_headers()) {
               // Print processed headers
               printf("%s: %s\n", k.c_str(), v.c_str());
             }
@@ -109,9 +115,30 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
 
     if (client->received_status() && client->received_headers()) {
       // Copies data to the buffer
-      pbuf_copy_partial(p, client->myBuff, p->tot_len - offset, offset);
-      client->myBuff[p->tot_len - offset] = 0;
       printf("Buffer= %d bytes\n", p->tot_len - offset);
+      pbuf_copy_partial(p, client->myBuff + client->buffer_available,
+                        p->tot_len - offset, offset);
+      client->buffer_available += p->tot_len - offset;
+
+      // Find next frame in buffer
+      int frame_index = MP3FindSyncWord((uint8_t*)client->myBuff,
+                                        client->buffer_available);
+
+      while (frame_index < client->buffer_available) {
+        int read = g_audio.stream_decode((uint8_t*)client->myBuff + frame_index,
+                                         client->buffer_available - frame_index);
+        if (read == 0)
+          break;
+
+        frame_index += read;
+      }
+
+      if (frame_index < client->buffer_available) {
+        // Move remaining buffer data to the beginnig of the buffer
+        memmove(client->myBuff, client->myBuff + frame_index,
+                client->buffer_available - frame_index);
+        client->buffer_available -= frame_index;
+      }
     }
 
     // Tells the underlying TCP mechanism that the data has been received
@@ -156,7 +183,7 @@ void Http_client::tls_tcp_setup(const char *website)
     err_t err = altcp_connect(pcb, &resolved_ip, 443, altcp_client_connected);
     if (err != ERR_OK)
     {
-        printf("TLS connection failed, erro: %d\n", err);
+        printf("TLS connection failed, error: %d\n", err);
     }
 }
 
