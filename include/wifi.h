@@ -1,6 +1,8 @@
 #ifndef WIFI_H
 #define WIFI _H
 
+#include <string>
+
 class Wifi
 {
 private:
@@ -9,7 +11,7 @@ public:
   {
   }
 
-  static bool connect_wifi();
+  static bool connect(std::string ssid, std::string pass);
 };
 
 #endif /* WIFI_H */

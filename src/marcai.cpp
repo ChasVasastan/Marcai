@@ -25,7 +25,7 @@ int main()
   g_audio.init_i2s();
 
 
-  if (!Wifi::connect_wifi())
+  if (!Wifi::connect(WIFI_SSID, WIFI_PASS))
   {
     printf("Connect wifi error\n");
   }
