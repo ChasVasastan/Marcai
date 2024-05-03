@@ -42,7 +42,8 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
 
     // TODO: Test this call and try to extract the mp3 file
     // Encode the octect format(binary) or try sending it directly to the encoder
-    printf("Recv total %d This buffer %d Next %p Error %d\n", p->tot_len, p->len, p->next, err);
+    printf("Recv total %d This buffer %d Next %p Error %d\n",
+           p->tot_len, p->len, p->next, err);
     uint16_t offset = 0;
     if (!client->received_status()) {
       uint16_t end = pbuf_memfind(p, "\r\n", 2, 0);
