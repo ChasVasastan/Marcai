@@ -120,10 +120,17 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
                                         client->buffer_available - offset);
 
       while (frame_index < client->buffer_available) {
-        int read = g_audio.stream_decode((uint8_t*)client->myBuff + frame_index,
-                                         client->buffer_available - frame_index);
-        if (read == 0)
+        int read;
+        do {
+          // Decode data while audio buffers are available
+          read = g_audio.stream_decode((uint8_t*)client->myBuff + frame_index,
+                                       client->buffer_available - frame_index);
+        } while (read < 0);
+
+        if (read == 0) {
+          // Could not decode because of insufficient data
           break;
+        }
 
         frame_index += read;
       }

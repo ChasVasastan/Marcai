@@ -22,7 +22,7 @@ public:
   /** \brief Decode one frame of mp3 and play it
    * \param data buffer with mp3 data
    * \param size count of available buffer data
-   * \return Size of consumed bytes
+   * \return Size of consumed bytes or -1 on error
    */
   int stream_decode(uint8_t *data, int size);
 
