@@ -16,6 +16,7 @@ add_executable(${PROJECT_NAME}
   src/wifi.cpp
   src/http_client.cpp
   src/http_request.cpp
+  src/serial.cpp
   lib/cJSON/cJSON.c
 )
 
@@ -38,6 +39,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_stdlib
   pico_multicore
   pico_audio_i2s
+  hardware_uart
   picomp3lib
   pico_cyw43_arch_lwip_threadsafe_background
   pico_lwip_http
