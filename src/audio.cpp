@@ -25,7 +25,7 @@ Audio::Audio() {
 
   // Check for valid channel connection to speaker and starts
   // processing the buffer
-  buffer_pool_ = audio_new_producer_pool(&producer_format_, 3, kMaxFrameSize);
+  buffer_pool_ = audio_new_producer_pool(&producer_format_, 10, kMaxFrameSize);
 }
 
 Audio::~Audio() {
@@ -57,8 +57,13 @@ bool Audio::init_i2s() {
 }
 
 int Audio::stream_decode(uint8_t *data, int size) {
-  // Get sample buffer and decode next frame
-  audio_buffer_t *buffer = take_audio_buffer(buffer_pool_, true);
+  // Get sample buffer with no blocking
+  audio_buffer_t *buffer = take_audio_buffer(buffer_pool_, false);
+
+  // If no available buffers we return error
+  if (!buffer)
+    return -1;
+
   int16_t *samples = reinterpret_cast<int16_t*>(buffer->buffer->bytes);
   int ret = MP3Decode(decoder_, &data, &size, samples, 0);
   if (ERR_MP3_NONE != ret) {
