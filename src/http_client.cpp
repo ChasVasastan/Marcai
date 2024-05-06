@@ -10,7 +10,6 @@
 #include "lwip/altcp.h"
 #include "lwip/dns.h"
 #include "lwip/altcp_tls.h"
-#include <map>
 #include <string>
 
 extern Audio g_audio;
@@ -21,18 +20,22 @@ Http_client::Http_client()
   response_headers_complete = false;
   http_content_length = -1;
   buffer_available = 0;
+  http_body_rx = 0;
 }
 
-void Http_client::http_get(char *website, char *api_endpoint)
+void Http_client::http_get(char *hostname, char *path)
 {
-    snprintf(header, sizeof(header), "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n", api_endpoint, website);
-    printf("HTTP Header: %s", header);
+    char format[] =  "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n";
+    snprintf(header, sizeof(header), format, path, hostname);
+    printf("HTTP Request: %s", header);
+    resolve_dns(hostname);
 }
 
 // Function to handle data being transmitted
 err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
 {
     Http_client *client = reinterpret_cast<Http_client*>(arg);
+    uint16_t offset = 0;
 
     if (p == NULL)
     {
@@ -40,11 +43,13 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
         return ERR_OK;
     }
 
+    // Copies data to the buffer
+    pbuf_copy_partial(p, client->myBuff + client->buffer_available,
+                      p->tot_len - offset, offset);
+    client->buffer_available += p->tot_len - offset;
+
     // TODO: Test this call and try to extract the mp3 file
     // Encode the octect format(binary) or try sending it directly to the encoder
-    printf("Recv total %d This buffer %d Next %p Error %d\n",
-           p->tot_len, p->len, p->next, err);
-    uint16_t offset = 0;
     if (!client->received_status()) {
       uint16_t end = pbuf_memfind(p, "\r\n", 2, 0);
       if (end < 0xffff) {
@@ -55,8 +60,8 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
           int status = std::atoi(status_line.substr(npos).c_str());
           printf("HTTP Version: %s\n", version.c_str());
           printf("HTTP Status:  %d\n", status);
-          client->set_status(status);
-          client->set_version(version);
+          client->http_status = status;
+          client->http_version = version;
         } else {
           panic("Invalid status line\n%s", status_line.c_str());
         }
@@ -73,57 +78,46 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
         end = pbuf_memfind(p, "\r\n", 2, offset);
         if (end < 0xffff) {
           int size = end - offset;
+          if (client->buffer_available > p->tot_len) {
+            // set correct size if headers overlap pbufs
+            size += client->buffer_available - p->tot_len;
+          }
+
+          // Found HTTP header
+          std::string header(client->myBuff + offset, size);
+          printf("Raw header: %s\n", header.c_str());
+          client->add_header(header);
+
           if (size == 0) {
-            // End of HTTP headers
-            printf("All headers received\n");
-            client->set_received_headers();
-            putchar('\n');
-
-            for (auto [k,v] : client->get_response_headers()) {
-              // Print processed headers
-              printf("%s: %s\n", k.c_str(), v.c_str());
-            }
-            putchar('\n');
-
+            // All headers received
             offset += 2;
             break;
           }
-          // Found HTTP header
-          std::string header(size, 0);
-          pbuf_copy_partial(p, header.data(), size, offset);
 
-          // Find header name and value delimiter
-          if (auto npos = header.find(": "); npos != std::string::npos) {
-            std::string key = header.substr(0, npos);
-            std::string value = header.substr(npos + 2);
-            client->add_header(key, value);
-            printf("Raw header: %s: %s\n", key.c_str(), value.c_str());
+          if (client->buffer_available > p->tot_len) {
+            pbuf_copy_partial(p, client->myBuff, p->tot_len, 0);
+            client->buffer_available = p->tot_len - end;
+            offset = end + 2;
           } else {
-            panic("Invalid header\n%s", header.c_str());
+            offset += size + 2;
           }
-          offset += size + 2;
         } else {
-          // TODO: handle headers between pbufs
-          panic("Headers bigger than this buffer");
+          // Move data to beginnig of buffer if buffer does not
+          // contain all headers
+          memmove(client->myBuff,
+                  client->myBuff + offset,
+                  client->buffer_available - offset);
+          client->buffer_available -= offset;
+          printf("Headers bigger buffer, waiting for more...\n");
         }
       } while (end < 0xffff);
-
-      if (offset < p->tot_len) {
-        // bytes left in payload
-        printf("remainging payload: %d\n", p->tot_len - offset);
-      }
     }
 
+    // Stream mp3 data and play it on speaker
     if (client->received_status() && client->received_headers()) {
-      // Copies data to the buffer
-      printf("Buffer= %d bytes\n", p->tot_len - offset);
-      pbuf_copy_partial(p, client->myBuff + client->buffer_available,
-                        p->tot_len - offset, offset);
-      client->buffer_available += p->tot_len - offset;
-
       // Find next frame in buffer
-      int frame_index = MP3FindSyncWord((uint8_t*)client->myBuff,
-                                        client->buffer_available);
+      int frame_index = MP3FindSyncWord((uint8_t*)client->myBuff + offset,
+                                        client->buffer_available - offset);
 
       while (frame_index < client->buffer_available) {
         int read = g_audio.stream_decode((uint8_t*)client->myBuff + frame_index,
@@ -140,13 +134,23 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
                 client->buffer_available - frame_index);
         client->buffer_available -= frame_index;
       }
+
+      client->http_body_rx += frame_index - offset;
     }
+
+    printf("Body= %d bytes of %d\r",
+           client->http_body_rx, client->http_content_length);
 
     // Tells the underlying TCP mechanism that the data has been received
     altcp_recved(pcb, p->tot_len);
 
     // Free the pbuf from memory
     pbuf_free(p);
+
+    if (client->http_body_rx == client->http_content_length) {
+      printf("\nBody transferred, closing connection\n");
+      return altcp_close(pcb);
+    }
 
     return ERR_OK;
 }
@@ -195,8 +199,9 @@ void Http_client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr
     if (ipaddr != NULL)
     {
         printf("DNS lookup successful: %s, IP address is %s\n", name, ipaddr_ntoa(ipaddr));
-        client->set_ip_resolved(true);
+        client->ip_resolved = true;
         client->resolved_ip = *ipaddr;
+        client->tls_tcp_setup(name);
     }
     else
     {
@@ -225,36 +230,30 @@ void Http_client::resolve_dns(const char *hostname)
     }
 }
 
-// Setters
-void Http_client::set_my_buff(const char *buffer, size_t length)
-{
-    memcpy(myBuff, buffer, length);
-    myBuff[length] = '\0';
-}
+void Http_client::add_header(std::string header) {
+  if (header.empty()) {
+    printf("All headers received %ld\n", http_response_headers.size());
+    response_headers_complete = true;
+    for (auto [k,v] : http_response_headers) {
+      // Print processed headers
+      printf("%s: %s\n", k.c_str(), v.c_str());
+    }
+    putchar('\n');
+    return;
+  }
 
-void Http_client::set_header(const char *newHeader)
-{
-    strncpy(header, newHeader, sizeof(header) - 1);
-    header[sizeof(header) - 1] = '\0';
-}
+  if (auto npos = header.find(": "); npos != std::string::npos) {
+    std::string name = header.substr(0, npos);
+    std::string value = header.substr(npos + 2);
+    for (char &c : name) {
+      c = std::tolower(c);
+    }
+    http_response_headers[name] = value;
 
-void Http_client::set_ip_resolved(bool status)
-{
-    ip_resolved = status;
-}
-
-// Getters
-char *Http_client::get_my_buff()
-{
-    return myBuff;
-}
-
-char *Http_client::get_header()
-{
-    return header;
-}
-
-bool Http_client::is_ip_resolved()
-{
-    return ip_resolved;
+    if (name == "content-length") {
+      http_content_length = std::atoi(value.c_str());
+    }
+  } else {
+    panic("Invalid header\n%s", header.c_str());
+  }
 }

@@ -33,22 +33,11 @@ int main()
   // Change this to the desired target
   char host[] = "marcai.blob.core.windows.net";
   char path[] = "/audio/mono/YourMom.mp3";
-  // char host[] = "catfact.ninja";
-  // char path[] = "/fact";
+  // char host[] = "www.ge.com";
+  // char path[] = "/";
 
   Http_client http_client;
   http_client.http_get(host, path);
-
-  http_client.resolve_dns(host);
-  printf("Trying to resolve IP...\n");
-  while (!http_client.is_ip_resolved())
-  {
-    //sleep_ms(500);
-  }
-
-  http_client.tls_tcp_setup(host);
-
-  while (true)
-  {
+  while (true) {
   }
 }
