@@ -25,30 +25,25 @@ Http_client::Http_client()
 }
 
 void Http_client::request(Http_request *req) {
-  std::stringstream ss;
-
-  // Request line
-  ss << req->method << " " << req->path << " " << req->version << "\r\n";
-
-  if (req->headers.count("host") == 0)
-    req->headers["host"] = req->hostname;
-
-  // Request headers
-  for (auto [name,value] : req->headers)
-    ss << name << ": " << value << "\r\n";
-
-  // End of request headers
-  ss << "\r\n";
-
-  header = ss.str();
-  printf("Request:\n%s\n", header.c_str());
-  resolve_dns(req->hostname.c_str());
+  // Resolve DNS
+  ip_addr_t addr;
+  err_t err = dns_gethostbyname(req->hostname.c_str(), &addr, dns_resolve_callback, req);
+  if (err == ERR_INPROGRESS) {
+    printf("DNS resolution in progress...\n");
+  } else if (err == ERR_OK) {
+    ip_resolved = true;
+    resolved_ip = addr;
+    printf("Target IP: %s\n", ipaddr_ntoa(&resolved_ip));
+  } else {
+    printf("DNS resolve failed/error\n");
+  }
 }
 
 // Function to handle data being transmitted
 err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
 {
-    Http_client *client = reinterpret_cast<Http_client*>(arg);
+    Http_request *req = reinterpret_cast<Http_request*>(arg);
+    Http_client *client = req->client;
     uint16_t offset = 0;
 
     if (p == NULL)
@@ -179,34 +174,49 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
 // Function to handle connection events
 err_t Http_client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err)
 {
-    Http_client *client = reinterpret_cast<Http_client*>(arg);
+  Http_request *req = reinterpret_cast<Http_request*>(arg);
 
-    if (err == ERR_OK)
-    {
-        printf("Connection established!\n");
-        err = altcp_write(pcb, client->header.c_str(), client->header.length(), 0);
-        err = altcp_output(pcb);
-        client->header.clear();
-    }
-    else
-    {
-        printf("Error on connect: %d\n", err);
-    }
-    return ERR_OK;
+  if (err == ERR_OK) {
+    printf("Connection established!\n");
+    std::stringstream ss;
+
+    // Request line
+    ss << req->method << " " << req->path << " " << req->version << "\r\n";
+
+    if (req->headers.count("host") == 0)
+      req->headers["host"] = req->hostname;
+
+    // Request headers
+    for (auto [name,value] : req->headers)
+      ss << name << ": " << value << "\r\n";
+
+    // End of request headers
+    ss << "\r\n";
+
+    std::string request_string = ss.str();
+    printf("Request:\n%s\n%ld\n", request_string.c_str(), request_string.length());
+    err = altcp_write(pcb, request_string.c_str(), request_string.length(), 0);
+    err = altcp_output(pcb);
+  } else {
+    printf("Error on connect: %d\n", err);
+  }
+  return ERR_OK;
 }
 
 // Function to set up TLS
-void Http_client::tls_tcp_setup(const char *website)
+void Http_client::tls_tcp_setup(Http_request *req)
 {
     // Set up TLS
     struct altcp_tls_config *tls_config = altcp_tls_create_config_client(NULL, 0);
     struct altcp_pcb *pcb = altcp_tls_new(tls_config, IPADDR_TYPE_ANY);
     altcp_recv(pcb, recv);
-    altcp_arg(pcb, this);
+    altcp_arg(pcb, req);
 
     // Connect to host with TLS/TCP
-    printf("Attempting to connect to %s with IP address %s\n", website, ipaddr_ntoa(&resolved_ip));
-    mbedtls_ssl_set_hostname((mbedtls_ssl_context *)altcp_tls_context(pcb), website);
+    printf("Attempting to connect to %s with IP address %s\n",
+           req->hostname.c_str(), ipaddr_ntoa(&resolved_ip));
+    auto ctx = reinterpret_cast<mbedtls_ssl_context*>(pcb);
+    mbedtls_ssl_set_hostname(ctx, req->hostname.c_str());
     err_t err = altcp_connect(pcb, &resolved_ip, 443, altcp_client_connected);
     if (err != ERR_OK)
     {
@@ -217,38 +227,17 @@ void Http_client::tls_tcp_setup(const char *website)
 // Callback for DNS lookup
 void Http_client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr, void *arg)
 {
-    Http_client *client = reinterpret_cast<Http_client*>(arg);
+    Http_request *req = reinterpret_cast<Http_request*>(arg);
     if (ipaddr != NULL)
     {
         printf("DNS lookup successful: %s, IP address is %s\n", name, ipaddr_ntoa(ipaddr));
-        client->ip_resolved = true;
-        client->resolved_ip = *ipaddr;
-        client->tls_tcp_setup(name);
+        req->client->ip_resolved = true;
+        req->client->resolved_ip = *ipaddr;
+        req->client->tls_tcp_setup(req);
     }
     else
     {
         printf("DNS lookup failed for %s\n", name);
-    }
-}
-
-// Function to get IP address from hostname
-void Http_client::resolve_dns(const char *hostname)
-{
-    ip_addr_t addr;
-    err_t err = dns_gethostbyname(hostname, &addr, dns_resolve_callback, this);
-    if (err == ERR_INPROGRESS)
-    {
-        printf("DNS resolution in progress...\n");
-    }
-    else if (err == ERR_OK)
-    {
-        ip_resolved = true;
-        resolved_ip = addr;
-        printf("Target IP: %s\n", ipaddr_ntoa(&resolved_ip));
-    }
-    else
-    {
-        printf("DNS resolve failed/error\n");
     }
 }
 
