@@ -1,1 +1,29 @@
 #include "serial.h"
+#include "hardware/gpio.h"
+#include "hardware/uart.h"
+
+#include <cstdio>
+
+void Serial::init() {
+  uart_init(uart0, 115200);
+  gpio_set_function(0, GPIO_FUNC_UART);
+  gpio_set_function(1, GPIO_FUNC_UART);
+
+  // Set 8 data bits, 1 stop bit, no parity
+  uart_set_format(uart0, 8, 1, UART_PARITY_NONE);
+
+  // Enable irq handler to be called on receive
+  irq_set_exclusive_handler(UART0_IRQ, uart_on_rx);
+  irq_set_enabled(UART0_IRQ, true);
+
+  // Enable irq for rx only
+  uart_set_irq_enables(uart0, true, false);
+}
+
+void Serial::uart_on_rx() {
+  while (uart_is_readable(uart0)) {
+    // Read one char and echo it back
+    char c = uart_getc(uart0);
+    putchar(c);
+  }
+}
