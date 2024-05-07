@@ -38,6 +38,13 @@ size_t decode_mp3(std::vector<uint8_t> data) {
   return offset;
 }
 
+size_t decode_xml(std::vector<uint8_t> data) {
+  for (auto c : data) {
+    putchar(c);
+  }
+  return data.size();;
+}
+
 int main()
 {
   stdio_init_all();
@@ -62,17 +69,21 @@ int main()
   // char path[] = "/";
 
   Http_client http_client;
-  Http_client::Http_request req;
-  req.headers["user-agent"] = "curl/8.7.1";
-  req.client = &http_client;
-  req.hostname = host;
-  req.path = path;
-  req.callback_body = decode_mp3;
-  http_client.request(&req);
+  Http_client::Http_request req[2];
+  req[0].headers["user-agent"] = "curl/8.7.1";
+  req[0].client = &http_client;
+  req[0].hostname = host;
+  req[0].path = path;
+  req[0].callback_body = decode_mp3;
+  http_client.request(&req[0]);
 
-  // req.path = "/audio?comp=list&prefix=mono";
-  // http_client.request(&req);
-  // http_client.http_get(host, path);
+  req[1].headers["user-agent"] = "curl/8.7.1";
+  req[1].client = &http_client;
+  req[1].hostname = host;
+  req[1].path = "/audio?comp=list&prefix=mono";
+  req[1].callback_body = decode_xml;
+  http_client.request(&req[1]);
+
   while (true) {
   }
 }
