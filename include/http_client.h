@@ -21,7 +21,11 @@ public:
   class Http_request {
   public:
     Http_request() {
+      status = 0;
+      content_length = -1;
     }
+    void add_header(std::string header);
+
     std::string hostname;
     std::string method = "GET";
     std::string path = "/";
@@ -29,8 +33,14 @@ public:
     headers_t headers;
     body_t body;
 
-    std::function<void(std::vector<uint8_t> part, int left)> callback_body;
+    std::function<size_t(std::vector<uint8_t> part)> callback_body;
     std::function<void(std::string name, std::string value)> callback_header;
+
+    int status;
+    headers_t response_headers;
+    body_t response_body;
+    int content_length;
+    std::vector<uint8_t> buffer;
 
     Http_client *client;
   };
@@ -40,15 +50,9 @@ public:
   void request(Http_request *req);
 
 private:
-  int buffer_available;
-  char myBuff[BUF_SIZE];
   bool ip_resolved = false;
   ip_addr_t resolved_ip;
 
-  unsigned int http_status;
-  std::string http_version;
-  unsigned int http_content_length;;
-  headers_t http_response_headers;
   bool response_headers_complete;
   int http_body_rx;
 
@@ -57,15 +61,9 @@ private:
   static void dns_resolve_callback(const char* hostname, const ip_addr_t *ipaddr, void *arg);
   void tls_tcp_setup(Http_request *req);
 
-  bool received_status() {
-    return http_status > 0;
-  }
-
   bool received_headers() {
     return response_headers_complete;
   }
-
-  void add_header(std::string header);
 };
 
 #endif /* HTTP_CLIENT_H */
