@@ -37,7 +37,11 @@ int main()
   // char path[] = "/";
 
   Http_client http_client;
-  http_client.http_get(host, path);
+  Http_client::Http_request req;
+  req.hostname = host;
+  req.path = path;
+  http_client.request(&req);
+  //http_client.http_get(host, path);
   while (true) {
   }
 }

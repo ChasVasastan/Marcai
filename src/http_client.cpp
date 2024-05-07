@@ -10,6 +10,7 @@
 #include "lwip/altcp.h"
 #include "lwip/dns.h"
 #include "lwip/altcp_tls.h"
+#include <sstream>
 #include <string>
 
 extern Audio g_audio;
@@ -23,12 +24,25 @@ Http_client::Http_client()
   http_body_rx = 0;
 }
 
-void Http_client::http_get(char *hostname, char *path)
-{
-    char format[] =  "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n";
-    snprintf(header, sizeof(header), format, path, hostname);
-    printf("HTTP Request: %s", header);
-    resolve_dns(hostname);
+void Http_client::request(Http_request *req) {
+  std::stringstream ss;
+
+  // Request line
+  ss << req->method << " " << req->path << " " << req->version << "\r\n";
+
+  if (req->headers.count("host") == 0)
+    req->headers["host"] = req->hostname;
+
+  // Request headers
+  for (auto [name,value] : req->headers)
+    ss << name << ": " << value << "\r\n";
+
+  // End of request headers
+  ss << "\r\n";
+
+  header = ss.str();
+  printf("Request:\n%s\n", header.c_str());
+  resolve_dns(req->hostname.c_str());
 }
 
 // Function to handle data being transmitted
@@ -170,8 +184,9 @@ err_t Http_client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_
     if (err == ERR_OK)
     {
         printf("Connection established!\n");
-        err = altcp_write(pcb, client->header, strlen(client->header), 0);
+        err = altcp_write(pcb, client->header.c_str(), client->header.length(), 0);
         err = altcp_output(pcb);
+        client->header.clear();
     }
     else
     {
