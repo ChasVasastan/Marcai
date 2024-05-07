@@ -1,6 +1,17 @@
 # Marcai
 A physical music box that calls a API connected to an AI music generator that gets fed different parameters from the box.
 
+## Board setup
+| Function  | PicoW Pin | Arduino Pin |
+| --------- |---------- | ----------- |
+| UART TX   | 1         | 0           |
+| UART RX   | 0         | 1           |
+| DHT Data  |           | 2           |
+| I2C SDA   |           | SDA/A4      |
+| I2C SCL   |           | SCL/A5      |
+| BCLK      | 26        |             |
+| LRC       | 27        |             |
+| DIN       | 28        |             |
 
 ## Install toolchain
 
