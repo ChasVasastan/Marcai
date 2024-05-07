@@ -18,8 +18,6 @@ extern Audio g_audio;
 
 Http_client::Http_client()
 {
-  response_headers_complete = false;
-  http_body_rx = 0;
 }
 
 void Http_client::request(Http_request *req) {
@@ -29,9 +27,9 @@ void Http_client::request(Http_request *req) {
   if (err == ERR_INPROGRESS) {
     printf("DNS resolution in progress...\n");
   } else if (err == ERR_OK) {
-    ip_resolved = true;
-    resolved_ip = addr;
-    printf("Target IP: %s\n", ipaddr_ntoa(&resolved_ip));
+    req->ip_resolved = true;
+    req->resolved_ip = addr;
+    printf("Target IP: %s\n", ipaddr_ntoa(&req->resolved_ip));
   } else {
     printf("DNS resolve failed/error\n");
   }
@@ -76,7 +74,7 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
       }
     }
 
-    if (req->status >= 100 && !client->received_headers()) {
+    if (req->status >= 100 && !req->received_headers()) {
       uint16_t end = 0xffff;
       do {
         end = pbuf_memfind(p, "\r\n", 2, offset);
@@ -115,17 +113,17 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
       } while (end < 0xffff);
     }
 
-    if (req->status >= 100 && client->received_headers()) {
+    if (req->status >= 100 && req->received_headers()) {
       int size = req->buffer.size();
       req->buffer.resize(size + p->tot_len);
       pbuf_copy_partial(p, req->buffer.data() + size, p->tot_len - offset, offset);
 
       // Call the callback body function
+      req->body_rx += req->buffer.size();
       if (req->callback_body) {
         size_t consumed = req->callback_body(req->buffer);
         req->buffer.erase(req->buffer.begin(), req->buffer.begin() + consumed);
-        printf("Body= %d bytes of %d\r",
-               client->http_body_rx, req->content_length);
+        printf("Body= %d bytes of %d\n", req->body_rx, req->content_length);
       } else {
         req->buffer.clear();
       }
@@ -137,7 +135,7 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
     // Free the pbuf from memory
     pbuf_free(p);
 
-    if (client->http_body_rx == req->content_length) {
+    if (req->body_rx == req->content_length) {
       printf("\nBody transferred, closing connection\n");
       return altcp_close(pcb);
     }
@@ -188,10 +186,10 @@ void Http_client::tls_tcp_setup(Http_request *req)
 
     // Connect to host with TLS/TCP
     printf("Attempting to connect to %s with IP address %s\n",
-           req->hostname.c_str(), ipaddr_ntoa(&resolved_ip));
+           req->hostname.c_str(), ipaddr_ntoa(&req->resolved_ip));
     auto ctx = reinterpret_cast<mbedtls_ssl_context*>(pcb);
     mbedtls_ssl_set_hostname(ctx, req->hostname.c_str());
-    err_t err = altcp_connect(pcb, &resolved_ip, 443, altcp_client_connected);
+    err_t err = altcp_connect(pcb, &req->resolved_ip, 443, altcp_client_connected);
     if (err != ERR_OK)
     {
         printf("TLS connection failed, error: %d\n", err);
@@ -205,8 +203,8 @@ void Http_client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr
     if (ipaddr != NULL)
     {
         printf("DNS lookup successful: %s, IP address is %s\n", name, ipaddr_ntoa(ipaddr));
-        req->client->ip_resolved = true;
-        req->client->resolved_ip = *ipaddr;
+        req->ip_resolved = true;
+        req->resolved_ip = *ipaddr;
         req->client->tls_tcp_setup(req);
     }
     else
@@ -218,7 +216,7 @@ void Http_client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr
 void Http_client::Http_request::add_header(std::string header) {
   if (header.empty()) {
     printf("All headers received %ld\n", response_headers.size());
-    client->response_headers_complete = true;
+    response_headers_complete = true;
     for (auto [k,v] : response_headers) {
       // Print processed headers
       printf("%s: %s\n", k.c_str(), v.c_str());

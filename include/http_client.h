@@ -37,12 +37,20 @@ public:
     std::function<void(std::string name, std::string value)> callback_header;
 
     int status;
+    bool response_headers_complete;
     headers_t response_headers;
     body_t response_body;
     int content_length;
+    int body_rx;
     std::vector<uint8_t> buffer;
 
+    bool ip_resolved = false;
+    ip_addr_t resolved_ip;
     Http_client *client;
+
+    bool received_headers() {
+      return response_headers_complete;
+    }
   };
 
   // Functions
@@ -50,20 +58,10 @@ public:
   void request(Http_request *req);
 
 private:
-  bool ip_resolved = false;
-  ip_addr_t resolved_ip;
-
-  bool response_headers_complete;
-  int http_body_rx;
-
   static err_t recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err);
   static err_t altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err);
   static void dns_resolve_callback(const char* hostname, const ip_addr_t *ipaddr, void *arg);
   void tls_tcp_setup(Http_request *req);
-
-  bool received_headers() {
-    return response_headers_complete;
-  }
 };
 
 #endif /* HTTP_CLIENT_H */
