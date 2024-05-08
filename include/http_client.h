@@ -23,6 +23,9 @@ public:
     Http_request() {
       status = 0;
       content_length = -1;
+      response_headers_complete = false;
+      buffer = nullptr;
+      body_rx = 0;
     }
     void add_header(std::string header);
 
@@ -42,7 +45,7 @@ public:
     body_t response_body;
     int content_length;
     int body_rx;
-    std::vector<uint8_t> buffer;
+    pbuf *buffer;
 
     bool ip_resolved = false;
     ip_addr_t resolved_ip;
