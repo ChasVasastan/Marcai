@@ -11,11 +11,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 pico_sdk_init()
 
 add_executable(${PROJECT_NAME}
-  marcai.cpp
-  audio.cpp
-  wifi.cpp
-  http_client.cpp
-  http_request.cpp
+  src/marcai.cpp
+  src/audio.cpp
+  src/wifi.cpp
+  src/http_client.cpp
+  src/http_request.cpp
 )
 
 add_subdirectory(lib/picomp3lib/src)
