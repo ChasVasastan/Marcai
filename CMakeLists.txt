@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
   audio.cpp
   wifi.cpp
   http_client.cpp
+  http_request.cpp
 )
 
 add_subdirectory(lib/picomp3lib/src)
