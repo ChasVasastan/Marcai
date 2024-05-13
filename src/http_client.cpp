@@ -1,5 +1,6 @@
 #include "http_client.h"
 
+#include "lwip/debug.h"
 #include "lwip/pbuf.h"
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
@@ -14,13 +15,9 @@
 #include <sstream>
 #include <string>
 
-extern Audio g_audio;
+namespace http {
 
-Http_client::Http_client()
-{
-}
-
-void Http_client::request(Http_request *req) {
+void http::client::request(http::request *req) {
   // Resolve DNS
   ip_addr_t addr;
   err_t err = dns_gethostbyname(req->hostname.c_str(), &addr, dns_resolve_callback, req);
@@ -36,10 +33,9 @@ void Http_client::request(Http_request *req) {
 }
 
 // Function to handle data being transmitted
-err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
+err_t http::client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
 {
-    Http_request *req = reinterpret_cast<Http_request*>(arg);
-    Http_client *client = req->client;
+    http::request *req = reinterpret_cast<http::request*>(arg);
     uint16_t offset = 0;
 
     if (p == NULL)
@@ -53,22 +49,20 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
     else
       pbuf_cat(req->buffer, p);
 
-    // TODO: Test this call and try to extract the mp3 file
-    // Encode the octect format(binary) or try sending it directly to the encoder
-    if (req->status < 100) {
+    if (req->state == http::state::STATUS) {
       uint16_t end = pbuf_memfind(req->buffer, "\r\n", 2, offset);
       if (end < 0xffff) {
         std::string status_line(end, '\0');
         pbuf_copy_partial(req->buffer, status_line.data(), end, offset);
+        printf("< %s\n", status_line.c_str());
         if (auto npos = status_line.find(" "); npos != std::string::npos) {
           std::string version = status_line.substr(0, npos);
           int status = std::atoi(status_line.substr(npos).c_str());
-          printf("HTTP Version: %s\n", version.c_str());
-          printf("HTTP Status:  %d\n", status);
           req->status = status;
           if (version != req->version) {
-            panic("Response version != HTTP/1.1");
+            panic("Response version %s != HTTP/1.1", version.c_str());
           }
+          req->state = http::state::HEADERS;
         } else {
           panic("Invalid status line\n%s", status_line.c_str());
         }
@@ -79,7 +73,7 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
       }
     }
 
-    if (req->status >= 100 && !req->received_headers()) {
+    if (req->state == http::state::HEADERS) {
       uint16_t end;
       do {
         end = pbuf_memfind(req->buffer, "\r\n", 2, offset);
@@ -87,32 +81,35 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
           // Found HTTP header
           std::string header(end - offset, '\0');
           pbuf_copy_partial(req->buffer, header.data(), header.size(), offset);
+          printf("< %s\r\n", header.c_str());
           offset = end + 2;
 
           req->add_header(header);
         }
-      } while(end < 0xffff && !req->received_headers());
+      } while(end < 0xffff && req->state == http::state::HEADERS);
     }
 
-    if (req->status >= 100 && req->received_headers()) {
+    if (req->state == http::state::BODY) {
       // Call the callback body function
-      if (req->callback_body) {
-        std::vector<uint8_t> partial_body(req->buffer->tot_len - offset);
-        pbuf_copy_partial(req->buffer, partial_body.data(), partial_body.size(), offset);
-        offset += req->callback_body(partial_body);
-      } else {
-        offset = req->buffer->tot_len;
-      }
-
-      req->body_rx += offset;
+      LWIP_ASSERT("callback_body fn == NULL", req->callback_body != nullptr);
+      if (req->content_length >= 0)
+        offset = req->transfer_body(offset, req->buffer->tot_len - offset);
+      else
+        offset = req->transfer_chunked(offset);
     }
 
     // Tells the underlying TCP mechanism that the data has been received
     altcp_recved(pcb, offset);
     req->buffer = pbuf_free_header(req->buffer, offset);
 
-    if (req->body_rx >= req->content_length) {
-      printf("\nBody transferred, closing connection\n");
+    if (req->state == http::state::DONE) {
+      printf("Body transferred, closing connection (%d bytes)\n",
+                                 req->body_rx);
+      return altcp_close(pcb);
+    }
+
+    if (req->state == http::state::FAILED) {
+      printf("Connection failed, closing...");
       return altcp_close(pcb);
     }
 
@@ -120,9 +117,9 @@ err_t Http_client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t 
 }
 
 // Function to handle connection events
-err_t Http_client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err)
+err_t http::client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err)
 {
-  Http_request *req = reinterpret_cast<Http_request*>(arg);
+  http::request *req = reinterpret_cast<http::request*>(arg);
 
   if (err == ERR_OK) {
     printf("Connection established!\n");
@@ -130,19 +127,22 @@ err_t Http_client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_
 
     // Request line
     ss << req->method << " " << req->path << " " << req->version << "\r\n";
+    printf("> %s", ss.str().c_str());
 
     if (req->headers.count("host") == 0)
       req->headers["host"] = req->hostname;
 
     // Request headers
-    for (auto [name,value] : req->headers)
+    for (auto [name,value] : req->headers) {
+      printf("> %s: %s\r\n", name.c_str(), value.c_str());
       ss << name << ": " << value << "\r\n";
+    }
 
     // End of request headers
     ss << "\r\n";
 
+    printf(">\r\n");
     std::string request_string = ss.str();
-    printf("Request:\n%s\n%ld\n", request_string.c_str(), request_string.length());
     err = altcp_write(pcb, request_string.c_str(), request_string.length(), 0);
     err = altcp_output(pcb);
   } else {
@@ -152,7 +152,7 @@ err_t Http_client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_
 }
 
 // Function to set up TLS
-void Http_client::tls_tcp_setup(Http_request *req)
+void http::client::tls_tcp_setup(http::request *req)
 {
     // Set up TLS
     struct altcp_tls_config *tls_config = altcp_tls_create_config_client(NULL, 0);
@@ -173,9 +173,9 @@ void Http_client::tls_tcp_setup(Http_request *req)
 }
 
 // Callback for DNS lookup
-void Http_client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr, void *arg)
+void http::client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr, void *arg)
 {
-    Http_request *req = reinterpret_cast<Http_request*>(arg);
+    http::request *req = reinterpret_cast<http::request*>(arg);
     if (ipaddr != NULL)
     {
         printf("DNS lookup successful: %s, IP address is %s\n", name, ipaddr_ntoa(ipaddr));
@@ -189,32 +189,4 @@ void Http_client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr
     }
 }
 
-void Http_client::Http_request::add_header(std::string header) {
-  if (header.empty()) {
-    printf("All headers received %ld\n", response_headers.size());
-    response_headers_complete = true;
-    for (auto [k,v] : response_headers) {
-      // Print processed headers
-      printf("%s: %s\n", k.c_str(), v.c_str());
-    }
-    putchar('\n');
-    return;
-  }
-
-  printf("Raw header: %s\n", header.c_str());
-
-  if (auto npos = header.find(": "); npos != std::string::npos) {
-    std::string name = header.substr(0, npos);
-    std::string value = header.substr(npos + 2);
-    for (char &c : name) {
-      c = std::tolower(c);
-    }
-    response_headers[name] = value;
-
-    if (name == "content-length") {
-      content_length = std::atoi(value.c_str());
-    }
-  } else {
-    panic("Invalid header\n%s", header.c_str());
-  }
-}
+} // namespace http
