@@ -131,7 +131,12 @@ err_t http::client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err
 
     if (req->headers.count("host") == 0)
       req->headers["host"] = req->hostname;
-
+      
+    if (req->method == "POST" || req->method == "PUT" || req->method == "PATCH")
+    {
+      req->headers["content-length"] = std::to_string(req->body.size());
+    }
+      
     // Request headers
     for (auto [name,value] : req->headers) {
       printf("> %s: %s\r\n", name.c_str(), value.c_str());
@@ -145,6 +150,11 @@ err_t http::client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err
     std::string request_string = ss.str();
     err = altcp_write(pcb, request_string.c_str(), request_string.length(), 0);
     err = altcp_output(pcb);
+    
+    // Request body
+    err = altcp_write(pcb, req->body.data(), req->body.size(), 0);
+    err = altcp_output(pcb);
+
   } else {
     printf("Error on connect: %d\n", err);
   }

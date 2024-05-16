@@ -16,6 +16,7 @@ add_executable(${PROJECT_NAME}
   src/wifi.cpp
   src/http_client.cpp
   src/http_request.cpp
+  lib/cJSON/cJSON.c
 )
 
 add_subdirectory(lib/picomp3lib/src)
@@ -29,6 +30,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/include
   ${CMAKE_CURRENT_LIST_DIR}/lib/picomp3lib/src
+  ${CMAKE_CURRENT_LIST_DIR}/lib/cJSON
+
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -40,6 +43,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_lwip_http
   pico_lwip_mbedtls
   pico_mbedtls
+
 )
 
 add_custom_target(${PROJECT_NAME}_flash
