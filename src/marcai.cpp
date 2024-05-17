@@ -12,6 +12,7 @@
 #include "wifi.h"
 #include "http_client.h"
 #include "audio.h"
+#include "serial.h"
 
 #include <cJSON.h>
 
@@ -54,6 +55,7 @@ int main()
   stdio_init_all();
   cyw43_arch_init();
   g_audio.init_i2s();
+  Serial::init();
 
   // The pico will start when you start the terminal
   while (!stdio_usb_connected());
