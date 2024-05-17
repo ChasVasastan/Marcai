@@ -65,10 +65,6 @@ int main()
 
   // Change this to the desired target
   char host[] = "google-translate1.p.rapidapi.com";
-  // www.udio.com/api/generate-proxy
-  // https://api.restful-api.dev/objects
-
-  cJSON_AddStringToObject(json, "name", "ludwig");
 
   http::client http_client;
   http::request req[4];
