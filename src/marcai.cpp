@@ -6,6 +6,9 @@
 
 #include "media_manager.h"
 #include "wifi.h"
+#include "http_client.h"
+#include "audio.h"
+#include "serial.h"
 
 #include <cJSON.h>
 
@@ -27,6 +30,7 @@ int main()
   stdio_init_all();
   cyw43_arch_init();
   manager.init();
+  Serial::init();
 
   // The pico will start when you start the terminal
   while (!stdio_usb_connected())
