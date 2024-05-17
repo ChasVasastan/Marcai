@@ -27,9 +27,11 @@ void http::client::request(http::request *req) {
     req->ip_resolved = true;
     req->resolved_ip = addr;
     printf("Target IP: %s\n", ipaddr_ntoa(&req->resolved_ip));
+    req->client->tls_tcp_setup(req);
   } else {
     printf("DNS resolve failed/error\n");
   }
+  while (req->state != http::state::DONE && req->state != http::state::FAILED);
 }
 
 // Function to handle data being transmitted

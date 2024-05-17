@@ -6,6 +6,7 @@
 
 #include "media_manager.h"
 #include "wifi.h"
+#include "serial.h"
 
 #include <cJSON.h>
 
@@ -26,6 +27,8 @@ int main()
 {
   stdio_init_all();
   cyw43_arch_init();
+
+  Serial::init();
   manager.init();
 
   // The pico will start when you start the terminal
@@ -37,6 +40,9 @@ int main()
     printf("Connect wifi error\n");
   }
 
+  std::vector<http::url> playlist = manager.get_playlist();
+  manager.play(playlist[0]);
+  /*
   while (true)
   {
     switch (gesture)
@@ -57,4 +63,6 @@ int main()
       break;
     }
   };
+    */
+
 }

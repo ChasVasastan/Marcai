@@ -46,9 +46,9 @@ public:
 
   int status;
   headers_t response_headers;
+  http::state state;
 
 private:
-  http::state state;
   int content_length;
   int body_rx;
   pbuf *buffer;
