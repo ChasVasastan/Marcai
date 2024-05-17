@@ -15,6 +15,7 @@ namespace http {
 
 typedef std::map<std::string, std::string> headers_t;
 typedef std::vector<uint8_t> body_t;
+typedef std::string url;
 
 enum class state {
   STATUS,
