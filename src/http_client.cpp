@@ -31,7 +31,9 @@ void http::client::request(http::request *req) {
   } else {
     printf("DNS resolve failed/error\n");
   }
-  while (req->state != http::state::DONE && req->state != http::state::FAILED);
+  while (req->state != http::state::DONE && req->state != http::state::FAILED) {
+    asm("nop");
+  }
 }
 
 // Function to handle data being transmitted

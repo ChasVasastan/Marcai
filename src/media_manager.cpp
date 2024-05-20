@@ -17,18 +17,15 @@ static size_t decode_mp3(http::request *req, std::vector<uint8_t> data)
   // Find next frame in buffer
   size_t offset = MP3FindSyncWord(data.data(), data.size());
 
-  while (offset < data.size())
-  {
+  while (offset < data.size()) {
     int read;
-    do
-    {
+    do {
       // Decode data while audio buffers are available
-      printf("Trying to decode data: %ld\n",offset);
       read = audio->stream_decode(data.data() + offset, data.size() - offset);
+      printf("Trying to decode data: (%d) %ld\n", read, offset);
     } while (read < 0);
 
-    if (read == 0)
-    {
+    if (read == 0) {
       // Could not decode because of insufficient data
       return offset;
     }
@@ -59,7 +56,7 @@ void media_manager::play(http::url url)
     host = url.substr(0, npos);
     path = url.substr(npos, url.length());
   }
-  
+
   // https://marcai.blob.core.windows.net/audio/mono/YourMom.mp3
   http::client http_client;
   http::request req;

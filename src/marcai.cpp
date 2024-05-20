@@ -6,7 +6,7 @@
 
 #include "media_manager.h"
 #include "wifi.h"
-#include "serial.h"
+//#include "serial.h"
 
 #include <cJSON.h>
 
@@ -27,13 +27,12 @@ int main()
 {
   stdio_init_all();
   cyw43_arch_init();
-
-  Serial::init();
-  manager.init();
+  //Serial::init();
 
   // The pico will start when you start the terminal
   while (!stdio_usb_connected())
     ;
+  manager.init();
 
   if (!Wifi::connect(WIFI_SSID, WIFI_PASS))
   {
@@ -42,9 +41,9 @@ int main()
 
   std::vector<http::url> playlist = manager.get_playlist();
   manager.play(playlist[0]);
-  /*
   while (true)
   {
+  /*
     switch (gesture)
     {
     case GESTURE_UP:
@@ -62,7 +61,7 @@ int main()
     default:
       break;
     }
-  };
-    */
+  */
+  }
 
 }
