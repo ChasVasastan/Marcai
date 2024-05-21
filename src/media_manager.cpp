@@ -26,7 +26,7 @@ static size_t decode_mp3(http::request *req, std::vector<uint8_t> data)
     {
       // Decode data while audio buffers are available
       read = audio->stream_decode(data.data() + offset, data.size() - offset);
-      printf("Trying to decode data: (%d) %ld\n", read, offset);
+      // printf("Trying to decode data: (%d) %ld\n", read, offset);
     } while (read < 0);
 
     if (read == 0)
@@ -93,7 +93,7 @@ void media_manager::play()
   {
     i = 0;
   }
-  
+
   http::url url = playlist[i];
 
   std::string host, path;

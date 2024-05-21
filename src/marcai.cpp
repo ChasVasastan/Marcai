@@ -77,18 +77,25 @@ int main()
       if (button1_pressed)
       {
         manager.play();
+        printf("Play");
       }
       else if (button2_pressed)
       {
         manager.pause();
+        printf("Pause");
+
       }
       else if (button3_pressed)
       {
         manager.next();
+        printf("Playing next");
+
       }
       else if (button4_pressed)
       {
         manager.previous();
+        printf("Playing previous");
+
       }
       last_press_time = current_time;
     }
