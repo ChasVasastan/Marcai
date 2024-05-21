@@ -11,12 +11,14 @@ class media_manager
 {
 private:
   Audio audio;
+  std::vector<http::url> playlist;
+  uint8_t i = 0;
+  bool playing = true;
 
 public:
-
   http::url generate_url(std::string keywords);
-  std::vector<http::url> get_playlist();
-  void play(http::url url);
+  void get_playlist();
+  void play();
   void pause();
   void next();
   void previous();

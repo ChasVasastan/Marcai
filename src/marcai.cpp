@@ -6,7 +6,7 @@
 
 #include "media_manager.h"
 #include "wifi.h"
-//#include "serial.h"
+// #include "serial.h"
 
 #include <cJSON.h>
 
@@ -27,7 +27,7 @@ int main()
 {
   stdio_init_all();
   cyw43_arch_init();
-  //Serial::init();
+  // Serial::init();
 
   // The pico will start when you start the terminal
   while (!stdio_usb_connected())
@@ -39,29 +39,78 @@ int main()
     printf("Connect wifi error\n");
   }
 
-  std::vector<http::url> playlist = manager.get_playlist();
-  manager.play(playlist[0]);
+  manager.get_playlist();
+
+  const uint PIN_BUTTON1 = 2;
+  const uint PIN_BUTTON2 = 3;
+  const uint PIN_BUTTON3 = 4;
+  const uint PIN_BUTTON4 = 5;
+
+  gpio_init(PIN_BUTTON1);
+  gpio_init(PIN_BUTTON2);
+  gpio_init(PIN_BUTTON3);
+  gpio_init(PIN_BUTTON4);
+
+  gpio_set_dir(PIN_BUTTON1, GPIO_IN);
+  gpio_set_dir(PIN_BUTTON2, GPIO_IN);
+  gpio_set_dir(PIN_BUTTON3, GPIO_IN);
+  gpio_set_dir(PIN_BUTTON4, GPIO_IN);
+
+  gpio_pull_down(PIN_BUTTON1);
+  gpio_pull_down(PIN_BUTTON2);
+  gpio_pull_down(PIN_BUTTON3);
+  gpio_pull_down(PIN_BUTTON4);
+
   while (true)
   {
-  /*
-    switch (gesture)
-    {
-    case GESTURE_UP:
-      manager.play();
-      break;
-    case GESTURE_DOWN:
-      manager.pause();
-      break;
-    case GESTURE_LEFT:
-      manager.previous();
-      break;
-    case GESTURE_RIGHT:
-      manager.next();
-      break;
-    default:
-      break;
-    }
-  */
-  }
+    bool button1_pressed = gpio_get(PIN_BUTTON1);
+    bool button2_pressed = gpio_get(PIN_BUTTON2);
+    bool button3_pressed = gpio_get(PIN_BUTTON3);
+    bool button4_pressed = gpio_get(PIN_BUTTON4);
 
+    const uint DEBOUNCE_TIME_MS = 200;
+    static uint64_t last_press_time = 0;
+    uint64_t current_time = to_ms_since_boot(get_absolute_time());
+
+    if (current_time - last_press_time > DEBOUNCE_TIME_MS)
+    {
+      if (button1_pressed)
+      {
+        manager.play();
+      }
+      else if (button2_pressed)
+      {
+        manager.pause();
+      }
+      else if (button3_pressed)
+      {
+        manager.next();
+      }
+      else if (button4_pressed)
+      {
+        manager.previous();
+      }
+      last_press_time = current_time;
+    }
+
+    /*
+      switch (gesture)
+      {
+      case GESTURE_UP:
+        manager.play();
+        break;
+      case GESTURE_DOWN:
+        manager.pause();
+        break;
+      case GESTURE_LEFT:
+        manager.previous();
+        break;
+      case GESTURE_RIGHT:
+        manager.next();
+        break;
+      default:
+        break;
+      }
+    */
+  }
 }
