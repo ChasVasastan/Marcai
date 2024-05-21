@@ -14,7 +14,7 @@
 
 static size_t decode_mp3(http::request *req, std::vector<uint8_t> data)
 {
-  printf("Got body %ld\n", data.size());
+  // printf("Got body %ld\n", data.size());
   auto audio = reinterpret_cast<Audio *>(req->arg);
   // Find next frame in buffer
   size_t offset = MP3FindSyncWord(data.data(), data.size());
@@ -89,7 +89,7 @@ void media_manager::get_playlist()
 
 void media_manager::play()
 {
-  if (i > playlist.size())
+  if (i >= playlist.size())
   {
     i = 0;
   }
@@ -125,14 +125,16 @@ void media_manager::play()
 
 void media_manager::pause()
 {
-  if (!playing)
+  if (playing)
+  {
+    audio_i2s_set_enabled(false);
+    playing = true;
+  }
+  else
   {
     audio_i2s_set_enabled(true);
     playing = false;
   }
-
-  audio_i2s_set_enabled(false);
-  playing = true;
 }
 
 void media_manager::next()

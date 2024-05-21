@@ -47,26 +47,29 @@ int main()
   const uint PIN_BUTTON4 = 5;
 
   gpio_init(PIN_BUTTON1);
-  gpio_init(PIN_BUTTON2);
-  gpio_init(PIN_BUTTON3);
-  gpio_init(PIN_BUTTON4);
-
   gpio_set_dir(PIN_BUTTON1, GPIO_IN);
-  gpio_set_dir(PIN_BUTTON2, GPIO_IN);
-  gpio_set_dir(PIN_BUTTON3, GPIO_IN);
-  gpio_set_dir(PIN_BUTTON4, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON1);
 
-  gpio_pull_down(PIN_BUTTON1);
-  gpio_pull_down(PIN_BUTTON2);
-  gpio_pull_down(PIN_BUTTON3);
-  gpio_pull_down(PIN_BUTTON4);
+  gpio_init(PIN_BUTTON2);
+  gpio_set_dir(PIN_BUTTON2, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON2);
+
+  gpio_init(PIN_BUTTON3);
+  gpio_set_dir(PIN_BUTTON3, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON3);
+
+  gpio_init(PIN_BUTTON4);
+  gpio_set_dir(PIN_BUTTON4, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON4);
+
 
   while (true)
   {
-    bool button1_pressed = gpio_get(PIN_BUTTON1);
-    bool button2_pressed = gpio_get(PIN_BUTTON2);
-    bool button3_pressed = gpio_get(PIN_BUTTON3);
-    bool button4_pressed = gpio_get(PIN_BUTTON4);
+    bool button1_pressed = !gpio_get(PIN_BUTTON1);
+    bool button2_pressed = !gpio_get(PIN_BUTTON2);
+    bool button3_pressed = !gpio_get(PIN_BUTTON3);
+    bool button4_pressed = !gpio_get(PIN_BUTTON4);
+
 
     const uint DEBOUNCE_TIME_MS = 200;
     static uint64_t last_press_time = 0;
@@ -74,27 +77,34 @@ int main()
 
     if (current_time - last_press_time > DEBOUNCE_TIME_MS)
     {
+
+      printf("%d",button1_pressed);
+      printf("%d",button2_pressed);
+      printf("%d",button3_pressed);
+      printf("%d",button4_pressed);
+
+
       if (button1_pressed)
       {
+        printf("Play\n");
         manager.play();
-        printf("Play");
       }
       else if (button2_pressed)
       {
+        printf("Pause\n");
         manager.pause();
-        printf("Pause");
 
       }
       else if (button3_pressed)
       {
+        printf("Playing next song\n");
         manager.next();
-        printf("Playing next");
 
       }
       else if (button4_pressed)
       {
+        printf("Playing previous song\n");
         manager.previous();
-        printf("Playing previous");
 
       }
       last_press_time = current_time;
