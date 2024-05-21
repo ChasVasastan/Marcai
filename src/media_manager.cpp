@@ -123,18 +123,18 @@ void media_manager::play()
   http_client.request(&req);
 }
 
-void media_manager::pause()
+bool media_manager::pause()
 {
   if (playing)
   {
-    audio_i2s_set_enabled(false);
-    playing = true;
-  }
-  else
-  {
-    audio_i2s_set_enabled(true);
     playing = false;
+    audio_i2s_set_enabled(false);
+    return playing;
   }
+
+  playing = true;
+  audio_i2s_set_enabled(true);
+  return true;
 }
 
 void media_manager::next()

@@ -62,14 +62,12 @@ int main()
   gpio_set_dir(PIN_BUTTON4, GPIO_IN);
   gpio_pull_up(PIN_BUTTON4);
 
-
   while (true)
   {
     bool button1_pressed = !gpio_get(PIN_BUTTON1);
     bool button2_pressed = !gpio_get(PIN_BUTTON2);
     bool button3_pressed = !gpio_get(PIN_BUTTON3);
     bool button4_pressed = !gpio_get(PIN_BUTTON4);
-
 
     const uint DEBOUNCE_TIME_MS = 200;
     static uint64_t last_press_time = 0;
@@ -78,11 +76,10 @@ int main()
     if (current_time - last_press_time > DEBOUNCE_TIME_MS)
     {
 
-      printf("%d",button1_pressed);
-      printf("%d",button2_pressed);
-      printf("%d",button3_pressed);
-      printf("%d",button4_pressed);
-
+      printf("%d", button1_pressed);
+      printf("%d", button2_pressed);
+      printf("%d", button3_pressed);
+      printf("%d", button4_pressed);
 
       if (button1_pressed)
       {
@@ -91,21 +88,24 @@ int main()
       }
       else if (button2_pressed)
       {
-        printf("Pause\n");
-        manager.pause();
-
+        if (!manager.pause())
+        {
+          printf("Paused\n");
+        } else if (manager.pause())
+        {
+          printf("Unpaused\n");
+        }
+        
       }
       else if (button3_pressed)
       {
         printf("Playing next song\n");
         manager.next();
-
       }
       else if (button4_pressed)
       {
         printf("Playing previous song\n");
         manager.previous();
-
       }
       last_press_time = current_time;
     }
