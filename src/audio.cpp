@@ -5,18 +5,22 @@
 #include <cstdio>
 
 #include "pico/binary_info.h"
-bi_decl(bi_3pins_with_names(28,         "I2S DIN",
-                            20,   "I2S BCK",
+
+#include "state.h"
+
+bi_decl(bi_3pins_with_names(28, "I2S DIN",
+                            20, "I2S BCK",
                             21, "I2S LRCK"));
 
-Audio::Audio() {
+Audio::Audio()
+{
   decoder_ = MP3InitDecoder();
 
   // Set sample rate and set mono or stereo audio
   audio_format_ = {
-    .sample_freq = 48000,
-    .format = AUDIO_BUFFER_FORMAT_PCM_S16,
-    .channel_count = 1,
+      .sample_freq = 48000,
+      .format = AUDIO_BUFFER_FORMAT_PCM_S16,
+      .channel_count = 1,
   };
 
   // Sets buffer format which is used in the audio buffer
@@ -28,23 +32,26 @@ Audio::Audio() {
   buffer_pool_ = audio_new_producer_pool(&producer_format_, 10, kMaxFrameSize);
 }
 
-Audio::~Audio() {
+Audio::~Audio()
+{
   MP3FreeDecoder(decoder_);
 }
 
-bool Audio::init_i2s() {
+bool Audio::init_i2s()
+{
   printf("Init I2S audio...");
 
   audio_i2s_config_t config = {
-    .data_pin = PICO_AUDIO_I2S_DATA_PIN,
-    .clock_pin_base = PICO_AUDIO_I2S_CLOCK_PIN_BASE,
-    .dma_channel = 2, // dma 0 and 1 used by wifi?
-    .pio_sm = 0,
+      .data_pin = PICO_AUDIO_I2S_DATA_PIN,
+      .clock_pin_base = PICO_AUDIO_I2S_CLOCK_PIN_BASE,
+      .dma_channel = 2, // dma 0 and 1 used by wifi?
+      .pio_sm = 0,
   };
 
   const audio_format_t *output_format;
   output_format = audio_i2s_setup(&audio_format_, &config);
-  if (!output_format) {
+  if (!output_format)
+  {
     panic("PicoAudio: Unable to open audio device.\n");
   }
 
@@ -56,7 +63,8 @@ bool Audio::init_i2s() {
   return false;
 }
 
-int Audio::stream_decode(uint8_t *data, int size) {
+int Audio::stream_decode(uint8_t *data, int size)
+{
   // Get sample buffer with no blocking
   audio_buffer_t *buffer = take_audio_buffer(buffer_pool_, false);
 
@@ -64,9 +72,10 @@ int Audio::stream_decode(uint8_t *data, int size) {
   if (!buffer)
     return -1;
 
-  int16_t *samples = reinterpret_cast<int16_t*>(buffer->buffer->bytes);
+  int16_t *samples = reinterpret_cast<int16_t *>(buffer->buffer->bytes);
   int ret = MP3Decode(decoder_, &data, &size, samples, 0);
-  if (ERR_MP3_NONE != ret) {
+  if (ERR_MP3_NONE != ret)
+  {
     // No samples were decoded
     buffer->sample_count = 0;
     give_audio_buffer(buffer_pool_, buffer);
@@ -76,17 +85,28 @@ int Audio::stream_decode(uint8_t *data, int size) {
   MP3FrameInfo info;
   MP3GetLastFrameInfo(decoder_, &info);
 
-  if (info.nChans == 1) {
+  if (info.nChans == 1)
+  {
     // Rearrange samples to match LRLRLR... so if we have mono sound
     // we skip every second sample
-    for (int i = info.outputSamps - 1; i > 0; --i) {
+    for (int i = info.outputSamps - 1; i > 0; --i)
+    {
       samples[i * 2] = samples[i];
-      //samples[i * 2 + 1] = 0;
+      // samples[i * 2 + 1] = 0;
     }
   }
 
   // Set decoded sample count and release buffer
   buffer->sample_count = info.outputSamps / info.nChans;
   give_audio_buffer(buffer_pool_, buffer);
+
+  // Check if we need to change the song
+  State& state = State::getInstance();
+  if (state.play_next_song_flag || state.play_previous_song_flag)
+  {
+    printf("Trying to play next or previous song");
+    return 0;
+  }
+
   return info.size;
 }

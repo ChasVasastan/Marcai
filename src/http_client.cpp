@@ -32,6 +32,7 @@ void http::client::request(http::request *req) {
     printf("DNS resolve failed/error\n");
   }
   while (req->state != http::state::DONE && req->state != http::state::FAILED) {
+    // Replace with a non-blocking sleep or something similar
     asm("nop");
   }
 }
@@ -149,7 +150,6 @@ err_t http::client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err
 
     // End of request headers
     ss << "\r\n";
-
     printf(">\r\n");
     std::string request_string = ss.str();
     err = altcp_write(pcb, request_string.c_str(), request_string.length(), 0);

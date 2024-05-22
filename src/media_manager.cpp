@@ -89,6 +89,7 @@ void media_manager::get_playlist()
 
 void media_manager::play()
 {
+  // Do we need this?
   if (i >= playlist.size())
   {
     i = 0;
@@ -110,7 +111,8 @@ void media_manager::play()
     path = url.substr(npos, url.length());
   }
 
-  // https://marcai.blob.core.windows.net/audio/mono/YourMom.mp3
+  printf("Host: %s, Path: %s\n", host.c_str(), path.c_str());
+
   http::client http_client;
   http::request req;
   req.client = &http_client;
@@ -121,6 +123,8 @@ void media_manager::play()
   req.arg = &audio;
 
   http_client.request(&req);
+  printf("HTTP request made\n");
+
 }
 
 bool media_manager::pause()

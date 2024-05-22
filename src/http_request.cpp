@@ -39,7 +39,12 @@ void http::request::add_header(std::string header) {
 size_t http::request::transfer_body(int offset, size_t size) {
   std::vector<uint8_t> partial_body(size);
   pbuf_copy_partial(buffer, partial_body.data(), partial_body.size(), offset);
-  return offset + callback_body(this, partial_body);
+  size_t consumed = callback_body(this, partial_body);
+  body_rx += consumed;
+  if (body_rx == content_length) {
+    state = http::state::DONE;
+  }
+  return offset + consumed;
 }
 
 size_t http::request::transfer_chunked(int offset) {
@@ -54,6 +59,7 @@ size_t http::request::transfer_chunked(int offset) {
       if (chunk_size == 0) {
         // Last chunk, ignore trailing headers and close connection
         printf("Last chunk, closing connection...\n");
+        content_length = body_rx;
         state = http::state::DONE;
         return offset;
       }
@@ -73,7 +79,6 @@ size_t http::request::transfer_chunked(int offset) {
       return offset;
     }
     offset = transfer_body(offset, size);
-    body_rx += size;
     chunk_size -= size;
   }
 

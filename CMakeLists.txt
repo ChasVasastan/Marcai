@@ -37,7 +37,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/lib/picomp3lib/src
   ${CMAKE_CURRENT_LIST_DIR}/lib/cJSON
   ${CMAKE_CURRENT_LIST_DIR}/lib/ezxml
-
+  ${PICO_SDK_PATH}/lib/lwip/src/include
+  ${PICO_SDK_PATH}/lib/lwip/src/include/ipv4
+  ${PICO_SDK_PATH}/lib/lwip/src/include/ipv6
+  ${PICO_SDK_PATH}/lib/lwip/src/include/compat/posix
+  ${PICO_SDK_PATH}/lib/lwip/contrib/ports/unix/include
+  ${PICO_SDK_PATH}/lib/lwip/test/unit/arch
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -50,7 +55,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_lwip_http
   pico_lwip_mbedtls
   pico_mbedtls
-
 )
 
 add_custom_target(${PROJECT_NAME}_flash
