@@ -1,16 +1,17 @@
 #include "media_manager.h"
 
+#include <vector>
+
 #include "lwipopts.h"
 #include "lwip/altcp.h"
 #include "lwip/dns.h"
 #include "lwip/altcp_tls.h"
+#include "pico/audio_i2s.h"
+
 #include "ezxml.h"
-#include <vector>
 #include "audio.h"
 #include "wifi.h"
 #include "http_client.h"
-
-#include "pico/audio_i2s.h"
 
 static size_t decode_mp3(http::request *req, std::vector<uint8_t> data)
 {
