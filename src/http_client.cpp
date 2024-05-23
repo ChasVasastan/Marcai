@@ -39,10 +39,17 @@ namespace http
     {
       printf("DNS resolve failed/error\n");
     }
+    State &state = State::getInstance();
     while (req->state != http::state::DONE && req->state != http::state::FAILED)
     {
       // Replace with a non-blocking sleep or something similar
       asm("nop");
+      /*
+      if (state.play_next_song_flag || state.play_previous_song_flag)
+      {
+        return;
+      }
+      */
     }
   }
 
@@ -147,9 +154,10 @@ namespace http
     if (state.play_next_song_flag || state.play_previous_song_flag)
     {
       printf("Closing connection forcefully, trying to play next or previous song\n");
+      altcp_recved(pcb, offset);
+      req->buffer = pbuf_free_header(req->buffer, offset);
       pbuf_free(req->buffer);
-      
-      // http::state::FAILED;
+      req->state = http::state::DONE;
       return altcp_close(pcb);
     }
 

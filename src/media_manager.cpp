@@ -111,8 +111,7 @@ void media_manager::play()
     host = url.substr(0, npos);
     path = url.substr(npos, url.length());
   }
-
-  printf("Host: %s, Path: %s\n", host.c_str(), path.c_str());
+  printf("Playing %s\n", path.c_str());
 
   http::client http_client;
   http::request req;
@@ -125,6 +124,7 @@ void media_manager::play()
 
   http_client.request(&req);
   printf("HTTP request made\n");
+  
 
 }
 

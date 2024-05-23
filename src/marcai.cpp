@@ -38,6 +38,7 @@ void playback_loop()
   {
     if (state.play_song_flag)
     {
+      printf("Setting play flag to false\n");
       state.play_song_flag = false;
       manager.play();
     }
@@ -55,15 +56,17 @@ void playback_loop()
     }
     if (state.play_next_song_flag)
     {
+      printf("Setting play next song flag to false\n");
       state.play_next_song_flag = false;
       manager.next();
     }
     if (state.play_previous_song_flag)
     {
+      printf("Setting play previous song flag to false\n");
       state.play_previous_song_flag = false;
       manager.previous();
     }
-    sleep_ms(10);
+    sleep_ms(20);
   }
 }
 
@@ -82,21 +85,22 @@ void debounce_and_check_buttons()
   {
     if (button1_pressed)
     {
-      printf("Play\n");
+      printf("Pressed play, setting flag to true\n");
       state.play_song_flag = true;
     }
     else if (button2_pressed)
     {
+      printf("Pressed paused, setting flag to true\n");
       state.pause_song_flag = true;
     }
     else if (button3_pressed)
     {
-      printf("Playing next song\n");
+      printf("Pressed next, setting flag to true\n");
       state.play_next_song_flag = true;
     }
     else if (button4_pressed)
     {
-      printf("Playing previous song\n");
+      printf("Pressed previous, setting flag to true\n");
       state.play_previous_song_flag = true;
     }
     last_press_time = current_time;
