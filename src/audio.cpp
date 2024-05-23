@@ -105,7 +105,7 @@ int Audio::stream_decode(uint8_t *data, int size)
   if (state.play_next_song_flag || state.play_previous_song_flag)
   {
     free(buffer);
-    printf("Trying to play next or previous song");
+    printf("Trying to play next or previous song\n");
     return 0;
   }
 

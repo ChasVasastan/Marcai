@@ -130,14 +130,15 @@ namespace http
 
     if (req->state == http::state::DONE)
     {
-      printf("Body transferred, closing connection (%d bytes)\n",
-             req->body_rx);
+      printf("Body transferred, closing connection (%d bytes)\n",req->body_rx);
+      pbuf_free(req->buffer);
       return altcp_close(pcb);
     }
 
     if (req->state == http::state::FAILED)
     {
-      printf("Connection failed, closing...");
+      printf("Connection failed, closing...\n");
+      pbuf_free(req->buffer);
       return altcp_close(pcb);
     }
 
@@ -145,8 +146,9 @@ namespace http
     State &state = State::getInstance();
     if (state.play_next_song_flag || state.play_previous_song_flag)
     {
-      printf("Closing connection forcefully, trying to play next or previous song");
-      free(p);
+      printf("Closing connection forcefully, trying to play next or previous song\n");
+      pbuf_free(req->buffer);
+      
       // http::state::FAILED;
       return altcp_close(pcb);
     }
