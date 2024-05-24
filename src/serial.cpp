@@ -3,6 +3,8 @@
 #include "hardware/uart.h"
 
 #include <cstdio>
+#include <string>
+
 
 void Serial::init() {
   uart_init(uart0, 115200);
@@ -21,9 +23,23 @@ void Serial::init() {
 }
 
 void Serial::uart_on_rx() {
+  std::string line;
   while (uart_is_readable(uart0)) {
     // Read one char and echo it back
     char c = uart_getc(uart0);
+    if (c == '\n') {
+       if (auto npos = line.find("gesture: "); npos != std::string::npos) {
+        std::string gesture = line.substr(npos, line.length());
+        if (gesture == "None") {
+        } else if (gesture == "Up") {
+        } else if (gesture == "Down") {
+        } else if (gesture == "Left") {
+        } else if (gesture == "Right") {
+        }
+      }
+    } else {
+      line.push_back(c);
+    }
     putchar(c);
   }
 }

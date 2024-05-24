@@ -9,12 +9,15 @@
 #include <cstdint>
 
 #include "lwip/ip_addr.h"
-#include "lwip/pbuf.h"
+
+struct altcp_pcb;
+struct pbuf;
 
 namespace http {
 
 typedef std::map<std::string, std::string> headers_t;
 typedef std::vector<uint8_t> body_t;
+typedef std::string url;
 
 enum class state {
   STATUS,
@@ -45,15 +48,18 @@ public:
 
   int status;
   headers_t response_headers;
+  volatile http::state state;
+
+  void abort_request();
 
 private:
-  http::state state;
   int content_length;
   int body_rx;
   pbuf *buffer;
   bool ip_resolved = false;
   ip_addr_t resolved_ip;
   int chunk_size;
+  struct altcp_pcb *pcb;
 
   void add_header(std::string header);
   size_t transfer_chunked(int offset);

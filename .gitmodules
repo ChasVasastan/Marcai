@@ -4,3 +4,6 @@
 [submodule "lib/cJSON"]
 	path = lib/cJSON
 	url = https://github.com/DaveGamble/cJSON.git
+[submodule "lib/ezxml"]
+	path = lib/ezxml
+	url = https://github.com/lxfontes/ezxml.git

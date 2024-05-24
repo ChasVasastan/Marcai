@@ -17,8 +17,12 @@ add_executable(${PROJECT_NAME}
   src/http_client.cpp
   src/http_request.cpp
   src/serial.cpp
+  src/media_manager.cpp
   lib/cJSON/cJSON.c
+  lib/ezxml/ezxml.c
 )
+
+add_compile_definitions(EZXML_NOMMAP)
 
 add_subdirectory(lib/picomp3lib/src)
 
@@ -32,7 +36,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/include
   ${CMAKE_CURRENT_LIST_DIR}/lib/picomp3lib/src
   ${CMAKE_CURRENT_LIST_DIR}/lib/cJSON
-
+  ${CMAKE_CURRENT_LIST_DIR}/lib/ezxml
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -45,7 +49,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_lwip_http
   pico_lwip_mbedtls
   pico_mbedtls
-
 )
 
 add_custom_target(${PROJECT_NAME}_flash

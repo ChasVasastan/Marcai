@@ -3,85 +3,148 @@
 
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
+#include "lwip/timeouts.h"
+#include "pico/multicore.h"
 
-#include "lwipopts.h"
-#include "lwip/altcp.h"
-#include "lwip/dns.h"
-#include "lwip/altcp_tls.h"
-
+#include "media_manager.h"
 #include "wifi.h"
-#include "http_client.h"
-#include "audio.h"
-#include "serial.h"
+#include "state.h"
+// #include "serial.h"
 
-#include <cJSON.h>
+enum
+{
+  GESTURE_NONE = -1,
+  GESTURE_UP = 0,
+  GESTURE_DOWN = 1,
+  GESTURE_LEFT = 2,
+  GESTURE_RIGHT = 3
+};
 
-cJSON *json = cJSON_CreateObject();
+const uint PIN_BUTTON1 = 2;
+const uint PIN_BUTTON2 = 3;
+const uint PIN_BUTTON3 = 4;
+const uint PIN_BUTTON4 = 5;
 
-Audio g_audio;
+const uint DEBOUNCE_TIME_MS = 200;
+static uint64_t last_press_time = 0;
 
-size_t decode_mp3(http::request *req, std::vector<uint8_t> data) {
-  // Find next frame in buffer
-  size_t offset = MP3FindSyncWord(data.data(), data.size());
+media_manager manager;
 
-  while (offset < data.size()) {
-    int read;
-    do {
-      // Decode data while audio buffers are available
-      read = g_audio.stream_decode(data.data() + offset,
-                                   data.size() - offset);
-    } while (read < 0);
+void playback_loop()
+{
+  State& state = State::getInstance();
 
-    if (read == 0) {
-      // Could not decode because of insufficient data
-      return offset;
+  while (true)
+  {
+    if (state.play_song_flag)
+    {
+      printf("Setting play flag to false\n");
+      state.play_song_flag = false;
+      manager.play();
     }
-
-    offset += read;
+    if (state.stop_song_flag)
+    {
+      printf("Setting stop flag to false\n");
+      manager.stop();
+      state.stop_song_flag = false;
+    }
+    if (state.play_next_song_flag)
+    {
+      printf("Setting play next song flag to false\n");
+      state.play_next_song_flag = false;
+      manager.next();
+    }
+    if (state.play_previous_song_flag)
+    {
+      printf("Setting play previous song flag to false\n");
+      state.play_previous_song_flag = false;
+      manager.previous();
+    }
+    sleep_ms(20);
   }
-
-  return offset;
 }
 
-size_t decode_xml(http::request *req, std::vector<uint8_t> data) {
-  for (auto c : data) {
-    putchar(c);
+void debounce_and_check_buttons()
+{
+  State& state = State::getInstance();
+
+  bool button1_pressed = !gpio_get(PIN_BUTTON1);
+  bool button2_pressed = !gpio_get(PIN_BUTTON2);
+  bool button3_pressed = !gpio_get(PIN_BUTTON3);
+  bool button4_pressed = !gpio_get(PIN_BUTTON4);
+
+  uint64_t current_time = to_ms_since_boot(get_absolute_time());
+
+  if (current_time - last_press_time > DEBOUNCE_TIME_MS)
+  {
+    if (button1_pressed)
+    {
+      printf("Pressed play, setting flag to true\n");
+      state.play_song_flag = true;
+    }
+    else if (button2_pressed)
+    {
+      printf("Pressed paused, setting flag to true\n");
+      state.stop_song_flag = true;
+    }
+    else if (button3_pressed)
+    {
+      printf("Pressed next, setting flag to true\n");
+      state.play_next_song_flag = true;
+    }
+    else if (button4_pressed)
+    {
+      printf("Pressed previous, setting flag to true\n");
+      state.play_previous_song_flag = true;
+    }
+    last_press_time = current_time;
   }
-  return data.size();
+}
+
+void event_loop()
+{
+  while (true)
+  {
+    sys_check_timeouts();
+    debounce_and_check_buttons();
+    sleep_ms(10);
+  }
 }
 
 int main()
 {
   stdio_init_all();
   cyw43_arch_init();
-  g_audio.init_i2s();
-  Serial::init();
+  // Serial::init();
 
   // The pico will start when you start the terminal
   while (!stdio_usb_connected());
+
+  manager.init();
 
   if (!Wifi::connect(WIFI_SSID, WIFI_PASS))
   {
     printf("Connect wifi error\n");
   }
 
-  // Change this to the desired target
-  char host[] = "google-translate1.p.rapidapi.com";
+  manager.get_playlist();
 
-  http::client http_client;
-  http::request req[4];
-  std::string body = "q=Detta%20%C3%A4r%20en%20svensk%20test%20text%20som%20ska%20avsl%C3%B6ja%20n%C3%A5got.";
+  gpio_init(PIN_BUTTON1);
+  gpio_set_dir(PIN_BUTTON1, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON1);
 
-  req[0].client = &http_client;
-  req[0].hostname = host;
-  req[0].headers["X-Rapidapi-Key"] = "insert-key-here";
-  req[0].headers["Content-type"] = "application/x-www-form-urlencoded";
-  req[0].headers["X-Rapidapi-Host"] = "google-translate1.p.rapidapi.com";
-  req[0].path = "/language/translate/v2/detect";
-  req[0].body = http::body_t(body.begin(), body.end());
-  req[0].method = "POST";
-  req[0].callback_body = decode_xml;
+  gpio_init(PIN_BUTTON2);
+  gpio_set_dir(PIN_BUTTON2, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON2);
 
-  http_client.request(&req[0]);
-  while (true);
+  gpio_init(PIN_BUTTON3);
+  gpio_set_dir(PIN_BUTTON3, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON3);
+
+  gpio_init(PIN_BUTTON4);
+  gpio_set_dir(PIN_BUTTON4, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON4);
+
+  multicore_launch_core1(playback_loop);
+  event_loop();
 }

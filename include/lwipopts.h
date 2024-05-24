@@ -93,4 +93,7 @@
 #define LWIP_ALTCP_TLS_MBEDTLS   1
 #define ALTCP_MBEDTLS_DEBUG  LWIP_DBG_ON
 
+#define LWIP_TIMERS                 1
+#define SYS_LIGHTWEIGHT_PROT        1
+
 #endif /* __LWIPOPTS_H__ */

@@ -5,6 +5,9 @@
 #include <cstdio>
 
 #include "pico/binary_info.h"
+
+#include "state.h"
+
 bi_decl(bi_3pins_with_names(PICO_AUDIO_I2S_DATA_PIN,         "I2S DIN",
                             PICO_AUDIO_I2S_CLOCK_PIN_BASE,   "I2S BCK",
                             PICO_AUDIO_I2S_CLOCK_PIN_BASE+1, "I2S LRCK"));
@@ -44,7 +47,7 @@ bool Audio::init_i2s() {
 
   const audio_format_t *output_format;
   output_format = audio_i2s_setup(&audio_format_, &config);
-  if (!output_format) {
+  if (!output_format){
     panic("PicoAudio: Unable to open audio device.\n");
   }
 
@@ -64,7 +67,7 @@ int Audio::stream_decode(uint8_t *data, int size) {
   if (!buffer)
     return -1;
 
-  int16_t *samples = reinterpret_cast<int16_t*>(buffer->buffer->bytes);
+  int16_t *samples = reinterpret_cast<int16_t *>(buffer->buffer->bytes);
   int ret = MP3Decode(decoder_, &data, &size, samples, 0);
   if (ERR_MP3_NONE != ret) {
     // No samples were decoded
@@ -79,14 +82,36 @@ int Audio::stream_decode(uint8_t *data, int size) {
   if (info.nChans == 1) {
     // Rearrange samples to match LRLRLR... so if we have mono sound
     // we skip every second sample
-    for (int i = info.outputSamps - 1; i > 0; --i) {
+    for (int i = info.outputSamps - 1; i > 0; --i)
+    {
       samples[i * 2] = samples[i];
-      //samples[i * 2 + 1] = 0;
+      // samples[i * 2 + 1] = 0;
     }
   }
 
   // Set decoded sample count and release buffer
   buffer->sample_count = info.outputSamps / info.nChans;
   give_audio_buffer(buffer_pool_, buffer);
+
+  // Check if we need to change the song
+  State &state = State::getInstance();
+  if (state.play_next_song_flag || state.play_previous_song_flag) {
+    free(buffer);
+    printf("Trying to play next or previous song\n");
+    return 0;
+  }
+
   return info.size;
+}
+
+void Audio::pause() {
+  printf("Audio pause\n");
+  audio_i2s_set_enabled(false);
+  printf("Audio pause done\n");
+}
+
+void Audio::play() {
+  printf("Audio play\n");
+  audio_i2s_set_enabled(true);
+  printf("Audio play done\n");
 }
