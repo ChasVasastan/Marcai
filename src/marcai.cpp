@@ -116,7 +116,6 @@ int main()
   stdio_init_all();
   cyw43_arch_init();
   // Serial::init();
-  g_audio.init_i2s();
 
   // The pico will start when you start the terminal
   while (!stdio_usb_connected());
