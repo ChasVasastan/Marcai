@@ -9,7 +9,9 @@
 #include <cstdint>
 
 #include "lwip/ip_addr.h"
-#include "lwip/pbuf.h"
+
+struct altcp_pcb;
+struct pbuf;
 
 namespace http {
 
@@ -46,7 +48,9 @@ public:
 
   int status;
   headers_t response_headers;
-  http::state state;
+  volatile http::state state;
+
+  void abort_request();
 
 private:
   int content_length;
@@ -55,6 +59,7 @@ private:
   bool ip_resolved = false;
   ip_addr_t resolved_ip;
   int chunk_size;
+  struct altcp_pcb *pcb;
 
   void add_header(std::string header);
   size_t transfer_chunked(int offset);

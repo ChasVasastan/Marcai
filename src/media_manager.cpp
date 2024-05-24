@@ -59,17 +59,25 @@ void media_manager::get_playlist()
 
   // Change this to the desired target
   char host[] = "marcai.blob.core.windows.net";
-  http::client http_client;
-  http::request req;
   std::vector<char> body;
-  req.client = &http_client;
-  req.hostname = host;
-  req.path = "/audio?comp=list&prefix=mono";
-  req.method = "GET";
-  req.callback_body = decode_playlist;
-  req.arg = &body;
+  if (req == nullptr)
+  {
+    req = new http::request;
+  }
 
-  http_client.request(&req);
+  req->client = &http_client;
+  req->hostname = host;
+  req->path = "/audio?comp=list&prefix=mono";
+  req->method = "GET";
+  req->callback_body = decode_playlist;
+  req->arg = &body;
+
+  http_client.request(req);
+  while (req->state != http::state::DONE && req->state != http::state::FAILED)
+  {
+    printf("waiting ");
+    asm("nop");
+  }
 
   ezxml_t xml = ezxml_parse_str(body.data(), body.size());
   ezxml_t blobs = ezxml_child(xml, "Blobs");
@@ -84,19 +92,20 @@ void media_manager::get_playlist()
   }
 
   ezxml_free(xml);
+  delete req;
+  req = nullptr;
 
   // https://marcai.blob.core.windows.net/audio?comp=list&prefix=mono
 }
 
 void media_manager::play()
 {
-  // Do we need this?
-  if (i >= playlist.size())
+  if (playlist_index >= playlist.size())
   {
-    i = 0;
+    playlist_index = 0;
   }
 
-  http::url url = playlist[i];
+  http::url url = playlist[playlist_index];
 
   std::string host, path;
   printf("URL before: %s\n", url.c_str());
@@ -113,44 +122,56 @@ void media_manager::play()
   }
   printf("Playing %s\n", path.c_str());
 
-  http::client http_client;
-  http::request req;
-  req.client = &http_client;
-  req.hostname = host.c_str();
-  req.path = path.c_str();
-  req.method = "GET";
-  req.callback_body = decode_mp3;
-  req.arg = &audio;
-
-  http_client.request(&req);
-  printf("HTTP request made\n");
-  
-
-}
-
-bool media_manager::pause()
-{
-  if (playing)
+  req = new http::request;
+  if (req == nullptr)
   {
-    playing = false;
-    audio_i2s_set_enabled(false);
-    return playing;
+    panic("Out of memory in the play function\n");
   }
 
-  playing = true;
-  audio_i2s_set_enabled(true);
-  return true;
+  req->client = &http_client;
+  req->hostname = host.c_str();
+  req->path = path.c_str();
+  req->method = "GET";
+  req->callback_body = decode_mp3;
+  req->arg = &audio;
+
+  http_client.request(req);
+  printf("HTTP request made\n");
+}
+
+bool media_manager::pause_play()
+{
+  printf("Playing %s\n", playing ? "true" : "false");
+  if (playing)
+  {
+    audio.pause();
+  } else {
+    audio.play();
+  }
+
+  playing = !playing;
+  return playing;
 }
 
 void media_manager::next()
 {
-  i++;
+  playlist_index++;
+  if (req != nullptr)
+  {
+    req->abort_request();
+    delete req;
+  }
   play();
 }
 
 void media_manager::previous()
 {
-  i--;
+  playlist_index--;
+  if (req != nullptr)
+  {
+    req->abort_request();
+    delete req;
+  }
   play();
 }
 

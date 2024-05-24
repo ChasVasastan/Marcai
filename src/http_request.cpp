@@ -1,4 +1,5 @@
 #include "http_request.h"
+#include "lwip/altcp.h"
 
 namespace http {
 
@@ -45,6 +46,14 @@ size_t http::request::transfer_body(int offset, size_t size) {
     state = http::state::DONE;
   }
   return offset + consumed;
+}
+
+void request::abort_request()
+{
+  altcp_recved(pcb, buffer->tot_len);
+  //pbuf_free(buffer);
+  state = http::state::FAILED;
+  altcp_close(pcb);
 }
 
 size_t http::request::transfer_chunked(int offset) {

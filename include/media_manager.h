@@ -3,6 +3,7 @@
 #define MARCAI_MEDIA_MANAGER_H
 
 #include "http_request.h"
+#include "http_client.h"
 #include "audio.h"
 
 #include <string>
@@ -12,14 +13,17 @@ class media_manager
 private:
   Audio audio;
   std::vector<http::url> playlist;
-  uint8_t i = 0;
+  uint8_t playlist_index = 0;
   bool playing = true;
+  http::client http_client;
+  http::request *req;
 
 public:
+
   http::url generate_url(std::string keywords);
   void get_playlist();
   void play();
-  bool pause();
+  bool pause_play();
   void next();
   void previous();
   void init();

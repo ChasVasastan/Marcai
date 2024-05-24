@@ -4,17 +4,17 @@
 #include "lwip/pbuf.h"
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
-
-#include "audio.h"
-#include "state.h"
-
 #include "lwipopts.h"
 #include "lwip/altcp.h"
 #include "lwip/dns.h"
 #include "lwip/altcp_tls.h"
+
 #include <cstdio>
 #include <sstream>
 #include <string>
+
+#include "audio.h"
+#include "state.h"
 
 namespace http
 {
@@ -39,18 +39,7 @@ namespace http
     {
       printf("DNS resolve failed/error\n");
     }
-    State &state = State::getInstance();
-    while (req->state != http::state::DONE && req->state != http::state::FAILED)
-    {
-      // Replace with a non-blocking sleep or something similar
-      asm("nop");
-      /*
-      if (state.play_next_song_flag || state.play_previous_song_flag)
-      {
-        return;
-      }
-      */
-    }
+    
   }
 
   // Function to handle data being transmitted
@@ -138,7 +127,6 @@ namespace http
     if (req->state == http::state::DONE)
     {
       printf("Body transferred, closing connection (%d bytes)\n",req->body_rx);
-      pbuf_free(req->buffer);
       return altcp_close(pcb);
     }
 
@@ -149,17 +137,18 @@ namespace http
       return altcp_close(pcb);
     }
 
+/*
     // Get singleton instance
     State &state = State::getInstance();
     if (state.play_next_song_flag || state.play_previous_song_flag)
     {
       printf("Closing connection forcefully, trying to play next or previous song\n");
       altcp_recved(pcb, offset);
-      req->buffer = pbuf_free_header(req->buffer, offset);
       pbuf_free(req->buffer);
       req->state = http::state::DONE;
       return altcp_close(pcb);
     }
+    */
 
     return ERR_OK;
   }
@@ -219,6 +208,7 @@ namespace http
     struct altcp_pcb *pcb = altcp_tls_new(tls_config, IPADDR_TYPE_ANY);
     altcp_recv(pcb, recv);
     altcp_arg(pcb, req);
+    req->pcb = pcb;
 
     // Connect to host with TLS/TCP
     printf("Attempting to connect to %s with IP address %s\n",

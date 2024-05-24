@@ -44,7 +44,7 @@ void playback_loop()
     }
     if (state.pause_song_flag)
     {
-      if (!manager.pause())
+      if (!manager.pause_play())
       {
         printf("Paused\n");
       }
@@ -52,6 +52,8 @@ void playback_loop()
       {
         printf("Unpaused\n");
       }
+      
+      printf("Setting play pause song flag to false\n");
       state.pause_song_flag = false;
     }
     if (state.play_next_song_flag)
