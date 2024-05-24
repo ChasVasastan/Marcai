@@ -18,9 +18,9 @@ Audio::Audio()
 
   // Set sample rate and set mono or stereo audio
   audio_format_ = {
-      .sample_freq = 48000,
-      .format = AUDIO_BUFFER_FORMAT_PCM_S16,
-      .channel_count = 1,
+    .sample_freq = 48000,
+    .format = AUDIO_BUFFER_FORMAT_PCM_S16,
+    .channel_count = 1,
   };
 
   // Sets buffer format which is used in the audio buffer
