@@ -13,7 +13,7 @@ public:
     volatile bool play_next_song_flag = false;
     volatile bool play_previous_song_flag = false;
     volatile bool play_song_flag = false;
-    volatile bool pause_song_flag = false;
+    volatile bool stop_song_flag = false;
 
 private:
     State() = default;

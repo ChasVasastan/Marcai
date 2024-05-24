@@ -139,18 +139,10 @@ void media_manager::play()
   printf("HTTP request made\n");
 }
 
-bool media_manager::pause_play()
+void media_manager::stop()
 {
-  printf("Playing %s\n", playing ? "true" : "false");
-  if (playing)
-  {
-    audio.pause();
-  } else {
-    audio.play();
-  }
-
-  playing = !playing;
-  return playing;
+  req->abort_request();
+  delete req;
 }
 
 void media_manager::next()

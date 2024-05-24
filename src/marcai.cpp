@@ -42,19 +42,11 @@ void playback_loop()
       state.play_song_flag = false;
       manager.play();
     }
-    if (state.pause_song_flag)
+    if (state.stop_song_flag)
     {
-      if (!manager.pause_play())
-      {
-        printf("Paused\n");
-      }
-      else
-      {
-        printf("Unpaused\n");
-      }
-      
-      printf("Setting play pause song flag to false\n");
-      state.pause_song_flag = false;
+      printf("Setting stop flag to false\n");
+      manager.stop();
+      state.stop_song_flag = false;
     }
     if (state.play_next_song_flag)
     {
@@ -93,7 +85,7 @@ void debounce_and_check_buttons()
     else if (button2_pressed)
     {
       printf("Pressed paused, setting flag to true\n");
-      state.pause_song_flag = true;
+      state.stop_song_flag = true;
     }
     else if (button3_pressed)
     {

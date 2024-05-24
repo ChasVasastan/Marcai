@@ -23,7 +23,7 @@ public:
   http::url generate_url(std::string keywords);
   void get_playlist();
   void play();
-  bool pause_play();
+  void stop();
   void next();
   void previous();
   void init();
