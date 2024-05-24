@@ -19,8 +19,7 @@
 namespace http
 {
 
-  void http::client::request(http::request *req)
-  {
+  void http::client::request(http::request *req) {
     // Resolve DNS
     ip_addr_t addr;
     err_t err = dns_gethostbyname(req->hostname.c_str(), &addr, dns_resolve_callback, req);
@@ -39,12 +38,11 @@ namespace http
   }
 
   // Function to handle data being transmitted
-  err_t http::client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
-  {
+  err_t http::client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err) {
     http::request *req = reinterpret_cast<http::request *>(arg);
     uint16_t offset = 0;
 
-    if (p == NULL){
+    if (p == NULL) {
       printf("No data received or connection closed\n");
       return ERR_OK;
     }
@@ -54,13 +52,13 @@ namespace http
     else
       pbuf_cat(req->buffer, p);
 
-    if (req->state == http::state::STATUS){
+    if (req->state == http::state::STATUS) {
       uint16_t end = pbuf_memfind(req->buffer, "\r\n", 2, offset);
       if (end < 0xffff){
         std::string status_line(end, '\0');
         pbuf_copy_partial(req->buffer, status_line.data(), end, offset);
         printf("< %s\n", status_line.c_str());
-        if (auto npos = status_line.find(" "); npos != std::string::npos){
+        if (auto npos = status_line.find(" "); npos != std::string::npos) {
           std::string version = status_line.substr(0, npos);
           int status = std::atoi(status_line.substr(npos).c_str());
           req->status = status;
@@ -68,11 +66,11 @@ namespace http
             panic("Response version %s != HTTP/1.1", version.c_str());
           }
           req->state = http::state::HEADERS;
-        } else{
+        } else {
           panic("Invalid status line\n%s", status_line.c_str());
         }
         offset = end + 2;
-      } else{
+      } else {
         // TODO: handle status not in payload
         panic("Status outside this buffer");
       }
@@ -122,8 +120,7 @@ namespace http
   }
 
   // Function to handle connection events
-  err_t http::client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err)
-  {
+  err_t http::client::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err) {
     http::request *req = reinterpret_cast<http::request *>(arg);
 
     if (err == ERR_OK) {
@@ -164,8 +161,7 @@ namespace http
   }
 
   // Function to set up TLS
-  void http::client::tls_tcp_setup(http::request *req)
-  {
+  void http::client::tls_tcp_setup(http::request *req) {
     // Set up TLS
     struct altcp_tls_config *tls_config = altcp_tls_create_config_client(NULL, 0);
     struct altcp_pcb *pcb = altcp_tls_new(tls_config, IPADDR_TYPE_ANY);
@@ -179,15 +175,13 @@ namespace http
     auto ctx = reinterpret_cast<mbedtls_ssl_context *>(pcb);
     mbedtls_ssl_set_hostname(ctx, req->hostname.c_str());
     err_t err = altcp_connect(pcb, &req->resolved_ip, 443, altcp_client_connected);
-    if (err != ERR_OK)
-    {
+    if (err != ERR_OK) {
       printf("TLS connection failed, error: %d\n", err);
     }
   }
 
   // Callback for DNS lookup
-  void http::client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr, void *arg)
-  {
+  void http::client::dns_resolve_callback(const char *name, const ip_addr_t *ipaddr, void *arg) {
     http::request *req = reinterpret_cast<http::request *>(arg);
     if (ipaddr != NULL) {
       printf("DNS lookup successful: %s, IP address is %s\n", name, ipaddr_ntoa(ipaddr));

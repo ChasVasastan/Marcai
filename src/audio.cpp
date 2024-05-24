@@ -12,7 +12,7 @@ bi_decl(bi_3pins_with_names(28, "I2S DIN",
                             20, "I2S BCK",
                             21, "I2S LRCK"));
 
-Audio::Audio(){
+Audio::Audio() {
   decoder_ = MP3InitDecoder();
 
   // Set sample rate and set mono or stereo audio
@@ -31,11 +31,11 @@ Audio::Audio(){
   buffer_pool_ = audio_new_producer_pool(&producer_format_, 10, kMaxFrameSize);
 }
 
-Audio::~Audio(){
+Audio::~Audio() {
   MP3FreeDecoder(decoder_);
 }
 
-bool Audio::init_i2s(){
+bool Audio::init_i2s() {
   printf("Init I2S audio...");
 
   audio_i2s_config_t config = {
@@ -59,7 +59,7 @@ bool Audio::init_i2s(){
   return false;
 }
 
-int Audio::stream_decode(uint8_t *data, int size){
+int Audio::stream_decode(uint8_t *data, int size) {
   // Get sample buffer with no blocking
   audio_buffer_t *buffer = take_audio_buffer(buffer_pool_, false);
 
@@ -69,7 +69,7 @@ int Audio::stream_decode(uint8_t *data, int size){
 
   int16_t *samples = reinterpret_cast<int16_t *>(buffer->buffer->bytes);
   int ret = MP3Decode(decoder_, &data, &size, samples, 0);
-  if (ERR_MP3_NONE != ret){
+  if (ERR_MP3_NONE != ret) {
     // No samples were decoded
     buffer->sample_count = 0;
     give_audio_buffer(buffer_pool_, buffer);
@@ -79,7 +79,7 @@ int Audio::stream_decode(uint8_t *data, int size){
   MP3FrameInfo info;
   MP3GetLastFrameInfo(decoder_, &info);
 
-  if (info.nChans == 1){
+  if (info.nChans == 1) {
     // Rearrange samples to match LRLRLR... so if we have mono sound
     // we skip every second sample
     for (int i = info.outputSamps - 1; i > 0; --i)
@@ -95,7 +95,7 @@ int Audio::stream_decode(uint8_t *data, int size){
 
   // Check if we need to change the song
   State &state = State::getInstance();
-  if (state.play_next_song_flag || state.play_previous_song_flag){
+  if (state.play_next_song_flag || state.play_previous_song_flag) {
     free(buffer);
     printf("Trying to play next or previous song\n");
     return 0;
@@ -104,13 +104,13 @@ int Audio::stream_decode(uint8_t *data, int size){
   return info.size;
 }
 
-void Audio::pause(){
+void Audio::pause() {
   printf("Audio pause\n");
   audio_i2s_set_enabled(false);
   printf("Audio pause done\n");
 }
 
-void Audio::play(){
+void Audio::play() {
   printf("Audio play\n");
   audio_i2s_set_enabled(true);
   printf("Audio play done\n");
