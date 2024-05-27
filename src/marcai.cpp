@@ -11,6 +11,9 @@
 #include "state.h"
 // #include "serial.h"
 
+#include "wifi_config.h"
+#include "http_server.h"
+
 enum
 {
   GESTURE_NONE = -1,
@@ -114,11 +117,26 @@ void event_loop()
 int main()
 {
   stdio_init_all();
-  cyw43_arch_init();
+  //cyw43_arch_init();
   // Serial::init();
+
+  Wifi_Config wifi_config;
+  Http_Server http_server;
 
   // The pico will start when you start the terminal
   while (!stdio_usb_connected());
+
+
+  wifi_config.setup_access_point();
+  http_server.init();
+
+  while (true)
+  {
+    cyw43_arch_poll();
+    sleep_ms(100);
+  }
+  
+/*
 
   manager.init();
 
@@ -126,7 +144,6 @@ int main()
   {
     printf("Connect wifi error\n");
   }
-
   manager.get_playlist();
 
   gpio_init(PIN_BUTTON1);
@@ -147,4 +164,5 @@ int main()
 
   multicore_launch_core1(playback_loop);
   event_loop();
+  */
 }

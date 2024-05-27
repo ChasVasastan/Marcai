@@ -18,6 +18,8 @@ add_executable(${PROJECT_NAME}
   src/http_request.cpp
   src/serial.cpp
   src/media_manager.cpp
+  src/wifi_config.cpp
+  src/http_server.cpp
   lib/cJSON/cJSON.c
   lib/ezxml/ezxml.c
 )
@@ -49,6 +51,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_lwip_http
   pico_lwip_mbedtls
   pico_mbedtls
+  pico_lwip_http
 )
 
 add_custom_target(${PROJECT_NAME}_flash
