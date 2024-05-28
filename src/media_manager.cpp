@@ -151,11 +151,12 @@ void media_manager::get_playlist()
 
 void media_manager::play()
 {
+  if (playlist.empty())
+    return;
   if (playlist_index >= playlist.size())
   {
     playlist_index = 0;
   }
-
 
   http::url url = playlist[playlist_index];
   play(url);
@@ -163,30 +164,33 @@ void media_manager::play()
 
 void media_manager::stop()
 {
-  req->abort_request();
-  delete req;
+  if (req) {
+    req->abort_request();
+    delete req;
+  }
+  req = nullptr;
   playing = false;
 }
 
 void media_manager::next()
 {
   playlist_index++;
-  if (req != nullptr)
-  {
+  if (req) {
     req->abort_request();
     delete req;
   }
+  req = nullptr;
   play();
 }
 
 void media_manager::previous()
 {
   playlist_index--;
-  if (req != nullptr)
-  {
+  if (req) {
     req->abort_request();
     delete req;
   }
+  req = nullptr;
   play();
 }
 
@@ -245,7 +249,6 @@ void media_manager::continue_playing() {
       if (read <= 0)
         break;
       offset += read;
-      printf("Decoded %d bytes\n", read);
     }
 
     req->skip(offset);

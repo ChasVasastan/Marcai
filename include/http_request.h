@@ -33,6 +33,7 @@ class request {
 public:
   friend class http::client;
   request();
+  ~request();
 
   http::client *client;
   std::string hostname;

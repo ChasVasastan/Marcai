@@ -13,6 +13,9 @@ request::request() {
   state = state::STATUS;
 }
 
+request::~request() {
+}
+
 void request::add_header(std::string header) {
   if (header.empty()) {
     state = state::BODY;
@@ -50,8 +53,9 @@ size_t request::transfer_body(int offset, size_t size) {
   }
 
   if (content_length > 0) {
-    printf("Got %d bytes of %d (%.2f%%)\n", body_rx, content_length,
-           ((float)body_rx / (float)content_length) * 100);
+    int part = body_rx + buffer->tot_len;
+    printf("Got %d bytes of %d (%.2f%%)\n", part, content_length,
+           ((float)part / (float)content_length) * 100);
   }
 
   return offset + consumed;
@@ -59,8 +63,8 @@ size_t request::transfer_body(int offset, size_t size) {
 
 void request::abort_request()
 {
-  altcp_recved(pcb, buffer->tot_len);
-  //pbuf_free(buffer);
+  if (buffer)
+    buffer = pbuf_free_header(buffer, buffer->tot_len);
   state = state::FAILED;
   altcp_close(pcb);
 }
