@@ -8,8 +8,7 @@ bool Wifi::connect(std::string ssid, std::string pass)
   cyw43_arch_enable_sta_mode();
 
   printf("Connecting to %s\n", ssid.c_str());
-  if (cyw43_arch_wifi_connect_timeout_ms(ssid.c_str(), pass.c_str(),
-                                         CYW43_AUTH_WPA2_AES_PSK, 30000)) {
+  if (cyw43_arch_wifi_connect_timeout_ms(ssid.c_str(), pass.c_str(), CYW43_AUTH_WPA2_AES_PSK, 30000)) {
     printf("Failed to connect :(\n");
 
     return false;

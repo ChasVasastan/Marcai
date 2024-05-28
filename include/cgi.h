@@ -1,11 +1,11 @@
 #include "lwip/apps/httpd.h"
 #include "pico/cyw43_arch.h"
+#include "wifi.h"
 #include <string.h>
 #include <stdlib.h>
 
 // Function to connect to Wi-Fi
 void connect_to_wifi(const char *ssid, const char *password) {
-    cyw43_arch_disable_ap_mode();
     cyw43_arch_enable_sta_mode();
     printf("Connecting to %s\n", ssid);
   if (cyw43_arch_wifi_connect_timeout_ms(ssid, password, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
@@ -29,8 +29,8 @@ const char *cgi_configure_handler(int iIndex, int iNumParams, char *pcParam[], c
 
     // Connect to the Wi-Fi network with the provided SSID and password
     printf("The entered SSID: %s, Password: %s\n",ssid, password);
-    connect_to_wifi(ssid, password);
-
+    //connect_to_wifi(ssid, password);
+    Wifi::connect(ssid, password);
     // Send a confirmation page back to the user
     return "/index.shtml";
 }

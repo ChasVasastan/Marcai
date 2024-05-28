@@ -8,13 +8,12 @@
 
 <body>
     <h1>Configure Wi-Fi for Marcai</h1>
-    <form action="/configure" method="POST">
-        SSID: <input type="text" name="ssid" required><br>
-        Password: <input type="password" name="password" required><br>
-        <button type="submit" value="Connect">Login 
-            <a href="/submit.cgi" ></a>
-        </button>
+    <form action="/submit.cgi" method="get">
+        <label for="ssid">SSID:</label>
+        <input type="text" id="ssid" name="ssid" required><br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br><br>
+        <input type="submit" value="Connect">
     </form>
 </body>
-
 </html>

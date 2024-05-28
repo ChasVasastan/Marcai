@@ -36,6 +36,7 @@ const uint DEBOUNCE_TIME_MS = 200;
 static uint64_t last_press_time = 0;
 
 media_manager manager;
+Wifi_Config wifi_config;
 
 void playback_loop()
 {
@@ -121,10 +122,9 @@ void event_loop()
 int main()
 {
   stdio_init_all();
-  //cyw43_arch_init();
+  cyw43_arch_init();
   // Serial::init();
 
-  Wifi_Config wifi_config;
 
   // The pico will start when you start the terminal
   while (!stdio_usb_connected());
@@ -134,10 +134,6 @@ int main()
     // Initialise web server
     httpd_init();
     printf("Http server initialised\n");
-
-    // Configure SSI and CGI handler
-    //ssi_init(); 
-    //printf("SSI Handler initialised\n");
     cgi_init();
     printf("CGI Handler initialised\n");
 

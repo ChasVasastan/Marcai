@@ -22,10 +22,6 @@ void print_ip_address() {
 }
 
 void Wifi_Config::setup_access_point() {
-  if (cyw43_arch_init()) {
-    printf("Wifi init failed\n");
-    return;
-  }
   
   cyw43_arch_enable_ap_mode(WIFI_AP_SSID, WIFI_AP_PASSWORD, CYW43_AUTH_WPA2_AES_PSK);
   printf("Access Point set with name: %s\n", WIFI_AP_SSID);
