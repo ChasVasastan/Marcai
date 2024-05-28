@@ -35,7 +35,7 @@ static size_t decode_png(http::request *req, std::vector<uint8_t> data)
   uint32_t size = FLASH_PAGE_SIZE * (data.size() / FLASH_PAGE_SIZE);
   if (req->state == http::state::DONE)
     size += FLASH_PAGE_SIZE;
-  data.reserve(size);
+  data.resize(size, 0x00);
   uint32_t ints = save_and_disable_interrupts();
   const uint8_t *buffer = data.data();
   flash_range_program(*addr, buffer, data.size());
@@ -230,7 +230,7 @@ void media_manager::get_album_cover(http::url url) {
   req.path = path.c_str();
   req.method = "GET";
   req.callback_body = decode_png;
-  //req.callback_result = png_result;
+  req.callback_result = png_result;
   req.arg = &addr;
 
   http_client.request(&req);

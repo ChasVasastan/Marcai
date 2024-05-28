@@ -112,8 +112,6 @@ void debounce_and_check_buttons()
 
 void event_loop()
 {
-  //screen.init();
-  //screen.clear(0xf81f);
   while (true)
   {
     sys_check_timeouts();
@@ -133,6 +131,8 @@ int main()
 
   // The pico will start when you start the terminal
   while (!stdio_usb_connected());
+  screen.init();
+  screen.clear(0xf81f);
   manager.init();
 
   manager.get_playlist();

@@ -53,7 +53,7 @@ size_t request::transfer_body(int offset, size_t size) {
   }
 
   if (content_length > 0) {
-    int part = body_rx + buffer->tot_len;
+    int part = (body_rx + buffer->tot_len) - consumed;
     printf("Got %d bytes of %d (%.2f%%)\n", part, content_length,
            ((float)part / (float)content_length) * 100);
   }
