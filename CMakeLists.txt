@@ -23,9 +23,10 @@ add_executable(${PROJECT_NAME}
   lib/ezxml/ezxml.c
 )
 
+# Ensure makefsdata.py is run before compiling the project
 message("Running makefsdata python script")
 execute_process(COMMAND
-    py makefsdata.py
+    python3 ./makefsdata.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 )
 

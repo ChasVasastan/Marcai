@@ -8,11 +8,11 @@ import os
 import binascii
 
 #Create file to write output into
-output = open('htmldata.c', 'w') 
+output = open('htmldata.c', 'w+')
 
 #Traverse directory, generate list of files
 files = list()
-os.chdir('Marcai/html_files')
+os.chdir('html_files/')
 for(dirpath, dirnames, filenames) in os.walk('.'):
     files += [os.path.join(dirpath, file) for file in filenames]
 
@@ -57,6 +57,7 @@ for file in files:
     fvar = fvar.replace('\\', '_')  #replace DOS path separator with underscore
     fvar = fvar.replace('.', '_')   #replace file extension dot with underscore
 
+    print(output.read())
     output.write("static const unsigned char data{}[] = {{\n".format(fvar))
     output.write("\t/* {} */\n\t".format(file))
 

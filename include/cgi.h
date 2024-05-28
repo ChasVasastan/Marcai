@@ -28,6 +28,7 @@ const char *cgi_configure_handler(int iIndex, int iNumParams, char *pcParam[], c
     }
 
     // Connect to the Wi-Fi network with the provided SSID and password
+    printf("The entered SSID: %s, Password: %s\n",ssid, password);
     connect_to_wifi(ssid, password);
 
     // Send a confirmation page back to the user

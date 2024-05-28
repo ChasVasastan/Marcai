@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Marcai Wi-Fi</title>
 </head>
+
 <body>
     <h1>Configure Wi-Fi for Marcai</h1>
     <form action="/configure" method="POST">
         SSID: <input type="text" name="ssid" required><br>
         Password: <input type="password" name="password" required><br>
-        <a href="/submit.cgi" type="submit" value="Connect"></a>
+        <button type="submit" value="Connect">Login 
+            <a href="/submit.cgi" ></a>
+        </button>
     </form>
 </body>
+
 </html>
