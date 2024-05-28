@@ -21,7 +21,7 @@ private:
   static err_t recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err);
   static err_t altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err);
   static void dns_resolve_callback(const char* hostname, const ip_addr_t *ipaddr, void *arg);
-  void tls_tcp_setup(http::request *req);
+  static void tls_tcp_setup(http::request *req, const ip_addr_t &addr);
 };
 
 } // namespace http

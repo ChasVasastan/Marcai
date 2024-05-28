@@ -1,5 +1,5 @@
 #ifndef WIFI_H
-#define WIFI _H
+#define WIFI_H
 
 #include <string>
 

@@ -15,7 +15,7 @@ struct pbuf;
 
 namespace http {
 
-typedef std::map<std::string, std::string> headers_t;
+typedef std::map<std::string, std::string>  headers_t;
 typedef std::vector<uint8_t> body_t;
 typedef std::string url;
 
@@ -44,20 +44,20 @@ public:
   void *arg;
 
   std::function<size_t(http::request *req, std::vector<uint8_t> part)> callback_body;
-  std::function<void(std::string name, std::string value)> callback_header;
+  std::function<void(http::request *req)> callback_result;
+  std::function<void(http::request *req, std::string name, std::string value)> callback_header;
 
   int status;
   headers_t response_headers;
   volatile http::state state;
+  int content_length;
 
   void abort_request();
 
+
 private:
-  int content_length;
   int body_rx;
   pbuf *buffer;
-  bool ip_resolved = false;
-  ip_addr_t resolved_ip;
   int chunk_size;
   struct altcp_pcb *pcb;
 

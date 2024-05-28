@@ -39,3 +39,7 @@ build target marcai_flash to flash the device.
 ```
 cmake --build build --target marcai_flash
 ```
+
+Set up for the screen:
+
+![screen_setup](https://github.com/ChasVasastan/Marcai/assets/68282284/e7bdf072-16dc-4f8a-9fb5-b72f835b1949)

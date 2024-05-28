@@ -10,6 +10,9 @@
 #include "wifi.h"
 #include "state.h"
 // #include "serial.h"
+#include "http_client.h"
+#include "audio.h"
+#include "screen.h"
 
 enum
 {
@@ -29,6 +32,8 @@ const uint DEBOUNCE_TIME_MS = 200;
 static uint64_t last_press_time = 0;
 
 media_manager manager;
+Screen sc;
+
 
 void playback_loop()
 {
@@ -103,6 +108,8 @@ void debounce_and_check_buttons()
 
 void event_loop()
 {
+  sc.init();
+  sc.clear(0x0000);
   while (true)
   {
     sys_check_timeouts();
@@ -115,19 +122,18 @@ int main()
 {
   stdio_init_all();
   cyw43_arch_init();
-  // Serial::init();
-
-  // The pico will start when you start the terminal
-  while (!stdio_usb_connected());
-
-  manager.init();
 
   if (!Wifi::connect(WIFI_SSID, WIFI_PASS))
   {
     printf("Connect wifi error\n");
   }
 
+  // The pico will start when you start the terminal
+  while (!stdio_usb_connected());
+  manager.init();
+
   manager.get_playlist();
+  //manager.get_album_cover("https://marcai.blob.core.windows.net/image/cover/YourMom.png");
 
   gpio_init(PIN_BUTTON1);
   gpio_set_dir(PIN_BUTTON1, GPIO_IN);

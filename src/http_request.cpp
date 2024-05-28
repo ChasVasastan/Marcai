@@ -14,7 +14,6 @@ http::request::request() {
 
 void http::request::add_header(std::string header) {
   if (header.empty()) {
-    printf("HTTP headers received\n");
     state = http::state::BODY;
     return;
   }
@@ -39,12 +38,22 @@ void http::request::add_header(std::string header) {
 
 size_t http::request::transfer_body(int offset, size_t size) {
   std::vector<uint8_t> partial_body(size);
+  if (content_length > 0) {
+    printf("Got %d bytes of %d (%.2f%%)\n", body_rx, content_length,
+           ((float)body_rx / (float)content_length) * 100);
+  }
+
   pbuf_copy_partial(buffer, partial_body.data(), partial_body.size(), offset);
+  if (body_rx + size == content_length)
+    state = http::state::DONE;
+
+  // TODO: if consumed != size and state == DONE, potential hang?
   size_t consumed = callback_body(this, partial_body);
   body_rx += consumed;
-  if (body_rx == content_length) {
-    state = http::state::DONE;
-  }
+
+  if (state == http::state::DONE && callback_result)
+    callback_result(this);
+
   return offset + consumed;
 }
 

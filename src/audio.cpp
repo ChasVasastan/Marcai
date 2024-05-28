@@ -85,7 +85,7 @@ int Audio::stream_decode(uint8_t *data, int size) {
     for (int i = info.outputSamps - 1; i > 0; --i)
     {
       samples[i * 2] = samples[i];
-      // samples[i * 2 + 1] = 0;
+      samples[i * 2 + 1] = samples[i];
     }
   }
 

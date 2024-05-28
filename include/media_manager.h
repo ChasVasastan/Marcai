@@ -22,11 +22,13 @@ public:
 
   http::url generate_url(std::string keywords);
   void get_playlist();
+  void play(http::url url);
   void play();
   void stop();
   void next();
   void previous();
   void init();
+  void get_album_cover(http::url url);
 };
 
 #endif /* MARCAI_MEDIA_MANAGER_H */
