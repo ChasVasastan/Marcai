@@ -93,14 +93,6 @@ int Audio::stream_decode(uint8_t *data, int size) {
   buffer->sample_count = info.outputSamps / info.nChans;
   give_audio_buffer(buffer_pool_, buffer);
 
-  // Check if we need to change the song
-  State &state = State::getInstance();
-  if (state.play_next_song_flag || state.play_previous_song_flag) {
-    free(buffer);
-    printf("Trying to play next or previous song\n");
-    return 0;
-  }
-
   return info.size;
 }
 

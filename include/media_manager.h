@@ -29,6 +29,8 @@ public:
   void previous();
   void init();
   void get_album_cover(http::url url);
+  void continue_playing();
+  bool is_playing();
 };
 
 #endif /* MARCAI_MEDIA_MANAGER_H */

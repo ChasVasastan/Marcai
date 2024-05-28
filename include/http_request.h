@@ -54,6 +54,11 @@ public:
 
   void abort_request();
 
+  // body functions
+  size_t read(uint8_t *dst, size_t size);
+  size_t peek(uint8_t *dst, size_t size);
+  size_t skip(size_t size);
+
 
 private:
   int body_rx;

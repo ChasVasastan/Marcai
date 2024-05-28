@@ -90,7 +90,6 @@ err_t http::client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t
 
   if (req->state == http::state::BODY) {
     // Call the callback body function
-    LWIP_ASSERT("callback_body fn == NULL", req->callback_body != nullptr);
     if (req->content_length >= 0)
       offset = req->transfer_body(offset, req->buffer->tot_len - offset);
     else
@@ -103,6 +102,8 @@ err_t http::client::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t
 
   if (req->state == http::state::DONE) {
     printf("Body transferred, closing connection (%d bytes)\n",req->body_rx);
+    if (req->callback_result)
+      req->callback_result(req);
     return altcp_close(pcb);
   }
 

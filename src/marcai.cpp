@@ -32,20 +32,26 @@ const uint DEBOUNCE_TIME_MS = 200;
 static uint64_t last_press_time = 0;
 
 media_manager manager;
-Screen sc;
+Screen screen;
 
 
 void playback_loop()
 {
+  printf("Start playback loop\n");
   State& state = State::getInstance();
 
   while (true)
   {
+    if (manager.is_playing())
+    {
+      manager.continue_playing();
+    }
+
     if (state.play_song_flag)
     {
       printf("Setting play flag to false\n");
       state.play_song_flag = false;
-      manager.play();
+      manager.play("https://marcai.blob.core.windows.net/audio/mono/YourMom.mp3");
     }
     if (state.stop_song_flag)
     {
@@ -65,7 +71,6 @@ void playback_loop()
       state.play_previous_song_flag = false;
       manager.previous();
     }
-    sleep_ms(20);
   }
 }
 
@@ -108,8 +113,9 @@ void debounce_and_check_buttons()
 
 void event_loop()
 {
-  sc.init();
-  sc.clear(0x0000);
+  printf("Enter event loop\n");
+  //screen.init();
+  //screen.clear(0x0000);
   while (true)
   {
     sys_check_timeouts();
@@ -133,7 +139,7 @@ int main()
   manager.init();
 
   manager.get_playlist();
-  //manager.get_album_cover("https://marcai.blob.core.windows.net/image/cover/YourMom.png");
+  manager.get_album_cover("https://marcai.blob.core.windows.net/image/cover/YourMom.png");
 
   gpio_init(PIN_BUTTON1);
   gpio_set_dir(PIN_BUTTON1, GPIO_IN);
@@ -151,6 +157,8 @@ int main()
   gpio_set_dir(PIN_BUTTON4, GPIO_IN);
   gpio_pull_up(PIN_BUTTON4);
 
+  auto &state = State::getInstance();
+  state.play_song_flag = true;
   multicore_launch_core1(playback_loop);
   event_loop();
 }

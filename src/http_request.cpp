@@ -1,20 +1,21 @@
 #include "http_request.h"
 #include "lwip/altcp.h"
+#include "lwip/pbuf.h"
 
 namespace http {
 
-http::request::request() {
+request::request() {
   status = 0;
   content_length = -1;
   buffer = nullptr;
   body_rx = 0;
   chunk_size = 0;
-  state = http::state::STATUS;
+  state = state::STATUS;
 }
 
-void http::request::add_header(std::string header) {
+void request::add_header(std::string header) {
   if (header.empty()) {
-    state = http::state::BODY;
+    state = state::BODY;
     return;
   }
 
@@ -36,23 +37,22 @@ void http::request::add_header(std::string header) {
   }
 }
 
-size_t http::request::transfer_body(int offset, size_t size) {
+size_t request::transfer_body(int offset, size_t size) {
   std::vector<uint8_t> partial_body(size);
+  pbuf_copy_partial(buffer, partial_body.data(), partial_body.size(), offset);
+  if (body_rx + size == content_length)
+    state = state::DONE;
+
+  int consumed = 0;
+  if (callback_body) {
+    consumed = callback_body(this, partial_body);
+    body_rx += consumed;
+  }
+
   if (content_length > 0) {
     printf("Got %d bytes of %d (%.2f%%)\n", body_rx, content_length,
            ((float)body_rx / (float)content_length) * 100);
   }
-
-  pbuf_copy_partial(buffer, partial_body.data(), partial_body.size(), offset);
-  if (body_rx + size == content_length)
-    state = http::state::DONE;
-
-  // TODO: if consumed != size and state == DONE, potential hang?
-  size_t consumed = callback_body(this, partial_body);
-  body_rx += consumed;
-
-  if (state == http::state::DONE && callback_result)
-    callback_result(this);
 
   return offset + consumed;
 }
@@ -61,11 +61,11 @@ void request::abort_request()
 {
   altcp_recved(pcb, buffer->tot_len);
   //pbuf_free(buffer);
-  state = http::state::FAILED;
+  state = state::FAILED;
   altcp_close(pcb);
 }
 
-size_t http::request::transfer_chunked(int offset) {
+size_t request::transfer_chunked(int offset) {
   if (chunk_size == 0) {
     // Get next chunk size
     uint16_t end = pbuf_memfind(buffer, "\r\n", 2, offset);
@@ -78,7 +78,7 @@ size_t http::request::transfer_chunked(int offset) {
         // Last chunk, ignore trailing headers and close connection
         printf("Last chunk, closing connection...\n");
         content_length = body_rx;
-        state = http::state::DONE;
+        state = state::DONE;
         return offset;
       }
       offset += chunk_size_string.size() + 2;
@@ -102,6 +102,30 @@ size_t http::request::transfer_chunked(int offset) {
 
   // End of chunk, remove crlf
   return transfer_chunked(offset + 2);
+}
+
+size_t request::read(uint8_t *dst, size_t size) {
+  size = peek(dst, size);
+  return skip(size);
+}
+
+size_t request::peek(uint8_t *dst, size_t size) {
+  if (state == state::STATUS || state == state::HEADERS)
+    return 0;
+
+  size = MIN(size, buffer->tot_len);
+  return pbuf_copy_partial(buffer, dst, size, 0);
+}
+
+size_t request::skip(size_t size) {
+  if (state == state::STATUS || state == state::HEADERS)
+    return 0;
+
+  size = MIN(size, buffer->tot_len);
+  buffer = pbuf_free_header(buffer, size);
+  altcp_recved(pcb, size);
+  body_rx += size;
+  return size;
 }
 
 } // namespace http
