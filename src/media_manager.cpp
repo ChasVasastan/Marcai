@@ -81,6 +81,14 @@ static void png_result(http::request *req) {
 
 void media_manager::play(http::url url)
 {
+  if (auto npos = url.find("/audio/mono"); npos != std::string::npos) {
+    http::url cover = url;
+    cover.replace(npos, 11, "/image/cover");
+    cover = cover.replace(cover.size() - 3, 3, "png");
+    printf("Cover image: %s\n", cover.c_str());
+    //get_album_cover(cover);
+  }
+
   std::string host, path;
   if (auto npos = url.find("https://"); npos != std::string::npos) {
     url = url.substr(npos+8, url.length());
