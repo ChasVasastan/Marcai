@@ -2,10 +2,12 @@
 #include "pico/cyw43_arch.h"
 
 #include <stdio.h>
-#include <lwip/ip_addr.h>
-#include <lwip/netif.h>
-
-#define HTTP_PORT 80
+#include "pico/stdlib.h"
+#include "lwip/ip_addr.h"
+#include "lwip/netif.h"
+#include "lwip/dhcp.h"
+#include "netif/etharp.h"
+#include "lwip/tcpip.h"
 
 void print_ip_address() {
   struct netif *netif = &cyw43_state.netif[CYW43_ITF_AP];
@@ -26,9 +28,31 @@ void Wifi_Config::setup_access_point() {
   }
   
   cyw43_arch_enable_ap_mode(WIFI_AP_SSID, WIFI_AP_PASSWORD, CYW43_AUTH_WPA2_AES_PSK);
-
   printf("Access Point set with name: %s\n", WIFI_AP_SSID);
-  print_ip_address();
+
+  // print_ip_address();
+
+  setting_netif();
+}
+
+
+void Wifi_Config::setting_netif()
+{
+  struct netif *netif = &cyw43_state.netif[CYW43_ITF_AP];
+  ip4_addr_t ipaddr, netmask, gw;
+
+  // Set up IP address, netmask, and gateway for the AP
+  //IP4_ADDR(&ipaddr, 192, 168, 4, 1);
+  IP4_ADDR(&ipaddr, 169, 254, 141, 158);
+  IP4_ADDR(&netmask, 255, 255, 255, 0);
+  IP4_ADDR(&gw, 169, 254, 141, 158);
+  // IP4_ADDR(&gw, 192, 168, 4, 1);
+
+  netif_set_addr(netif, &ipaddr, &netmask, &gw);
+
+  // Start the DHCP server
+  // dhcp_server_start(netif);
+  printf("Server started with IP: %s\n", ipaddr_ntoa(&ipaddr));
 }
 
 

@@ -12,7 +12,11 @@
 // #include "serial.h"
 
 #include "wifi_config.h"
-#include "http_server.h"
+
+#include "lwip/apps/httpd.h"
+#include "lwipopts.h"
+#include "ssi.h"
+#include "cgi.h"
 
 enum
 {
@@ -121,17 +125,25 @@ int main()
   // Serial::init();
 
   Wifi_Config wifi_config;
-  Http_Server http_server;
 
   // The pico will start when you start the terminal
   while (!stdio_usb_connected());
 
-
   wifi_config.setup_access_point();
-  http_server.init();
+
+    // Initialise web server
+    httpd_init();
+    printf("Http server initialised\n");
+
+    // Configure SSI and CGI handler
+    //ssi_init(); 
+    //printf("SSI Handler initialised\n");
+    cgi_init();
+    printf("CGI Handler initialised\n");
 
   while (true)
   {
+    sys_check_timeouts();
     cyw43_arch_poll();
     sleep_ms(100);
   }

@@ -19,9 +19,14 @@ add_executable(${PROJECT_NAME}
   src/serial.cpp
   src/media_manager.cpp
   src/wifi_config.cpp
-  src/http_server.cpp
   lib/cJSON/cJSON.c
   lib/ezxml/ezxml.c
+)
+
+message("Running makefsdata python script")
+execute_process(COMMAND
+    py makefsdata.py
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 )
 
 add_compile_definitions(EZXML_NOMMAP)
@@ -29,7 +34,7 @@ add_compile_definitions(EZXML_NOMMAP)
 add_subdirectory(lib/picomp3lib/src)
 
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
-pico_enable_stdio_uart(${PROJECT_NAME} 1)
+pico_enable_stdio_uart(${PROJECT_NAME} 0)
 
 pico_add_extra_outputs(${PROJECT_NAME})
 
@@ -52,6 +57,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_lwip_mbedtls
   pico_mbedtls
   pico_lwip_http
+  hardware_adc
 )
 
 add_custom_target(${PROJECT_NAME}_flash
