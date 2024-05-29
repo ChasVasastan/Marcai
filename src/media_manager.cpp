@@ -26,67 +26,19 @@ uint32_t getFreeHeap(void) {
   return getTotalHeap() - m.uordblks;
 }
 
-/** @brief Write http body to flash memory
- */
-static uint8_t __in_flash() __aligned(FLASH_SECTOR_SIZE) album_cover[FLASH_SECTOR_SIZE * 30];
-static size_t decode_png(http::request *req, std::vector<uint8_t> data)
-{
-  auto *addr = reinterpret_cast<uint32_t*>(req->arg);
-  uint32_t size = FLASH_PAGE_SIZE * (data.size() / FLASH_PAGE_SIZE);
-  if (req->state == http::state::DONE)
-    size += FLASH_PAGE_SIZE;
-  data.resize(size, 0x00);
-  uint32_t ints = save_and_disable_interrupts();
-  const uint8_t *buffer = data.data();
-  flash_range_program(*addr, buffer, data.size());
-  *addr += data.size();
-  restore_interrupts(ints);
-  return size;
-}
-
-/** @brief Callback for when http request is done to decode and
- *  display image on screen.
- */
-static void png_result(http::request *req) {
-  int error;
-  spng_ctx *ctx;
-  uint32_t offset = 0;
-  spng_ihdr ihdr;
-  ctx = spng_ctx_new(0);
-  auto decode_png_stream = [](spng_ctx *ctx, void *arg, void *dst, size_t size) {
-    auto offset = reinterpret_cast<uint32_t*>(arg);
-    memcpy(dst, album_cover + *offset, size);
-    *offset += size;
-    return 0;
-  };
-
-  spng_set_png_stream(ctx, decode_png_stream, &offset);
-  spng_decode_image(ctx, NULL, 0, SPNG_FMT_RGB8, SPNG_DECODE_PROGRESSIVE);
-  spng_get_ihdr(ctx, &ihdr);
-  printf("PNG image (%d,%d)\n", ihdr.width, ihdr.height);
-  for (int i = 0; i < ihdr.height; ++i) {
-    std::vector<uint8_t> rgb888(240 * 3);
-    error = spng_decode_row(ctx, rgb888.data(), rgb888.size());
-    std::vector<uint16_t> rgb565 = Image::convert_rgb888_to_rgb565(rgb888);
-    // Display image data on screen, first row initiate screen write
-    // and subsequent rows just write data
-    if (i == 0)
-      screen.display(rgb565.data(), rgb565.size());
-    else
-      screen.display_row(i, rgb565.data(), rgb565.size());
-  }
-  spng_ctx_free(ctx);
-}
-
-
 void media_manager::play(http::url url)
 {
+  if (req) {
+    req->abort_request();
+    delete req;
+  }
+
   if (auto npos = url.find("/audio/mono"); npos != std::string::npos) {
     http::url cover = url;
     cover.replace(npos, 11, "/image/cover");
     cover = cover.replace(cover.size() - 3, 3, "png");
     printf("Cover image: %s\n", cover.c_str());
-    //get_album_cover(cover);
+    get_album_cover(cover);
   }
 
   std::string host, path;
@@ -97,11 +49,6 @@ void media_manager::play(http::url url)
   if (auto npos = url.find("/"); npos != std::string::npos) {
     host = url.substr(0, npos);
     path = url.substr(npos, url.length());
-  }
-
-  if (req) {
-    req->abort_request();
-    delete req;
   }
 
   req = new http::request;
@@ -210,11 +157,6 @@ void media_manager::init()
 void media_manager::get_album_cover(http::url url) {
   http::request req;
   // Memory address for flash data
-  uint32_t addr = reinterpret_cast<uint32_t>(album_cover) - XIP_BASE;
-  uint32_t ints = save_and_disable_interrupts();
-  flash_range_erase(addr, sizeof(album_cover));
-  restore_interrupts(ints);
-
   if (auto npos = url.find("https://"); npos != std::string::npos) {
     url = url.substr(npos+8, url.length());
   }
@@ -229,14 +171,47 @@ void media_manager::get_album_cover(http::url url) {
   req.hostname = host.c_str();
   req.path = path.c_str();
   req.method = "GET";
-  req.callback_body = decode_png;
-  req.callback_result = png_result;
-  req.arg = &addr;
 
   http_client.request(&req);
 
-  // Wait for request to finish
-  while (req.state != http::state::DONE && req.state != http::state::FAILED);
+  int error;
+  spng_ctx *ctx;
+  uint32_t offset = 0;
+  spng_ihdr ihdr;
+  auto decode_png_stream = [](spng_ctx *ctx, void *arg, void *dst, size_t size) {
+    auto req = reinterpret_cast<http::request*>(arg);
+    int offset = 0;
+
+    // if (req->status != 200)
+    //   return static_cast<int>(SPNG_IO_ERROR);
+    do {
+      printf("PNG data %d (%ld)", offset, size);
+      int len = req->peek(reinterpret_cast<uint8_t*>(dst) + offset,
+                          size - offset);
+      offset += len;
+      printf(" read %d\n", len);
+    } while (offset < size);
+    req->skip(size);
+    return static_cast<int>(SPNG_OK);
+  };
+
+  ctx = spng_ctx_new(0);
+  spng_set_png_stream(ctx, decode_png_stream, &req);
+  spng_decode_image(ctx, NULL, 0, SPNG_FMT_RGB8, SPNG_DECODE_PROGRESSIVE);
+  spng_get_ihdr(ctx, &ihdr);
+  printf("PNG image (%d,%d)\n", ihdr.width, ihdr.height);
+  for (int i = 0; i < ihdr.height; ++i) {
+    std::vector<uint8_t> rgb888(240 * 3);
+    error = spng_decode_row(ctx, rgb888.data(), rgb888.size());
+    std::vector<uint16_t> rgb565 = Image::convert_rgb888_to_rgb565(rgb888);
+    // Display image data on screen, first row initiate screen write
+    // and subsequent rows just write data
+    if (i == 0)
+      screen.display(rgb565.data(), rgb565.size());
+    else
+      screen.display_row(i, rgb565.data(), rgb565.size());
+  }
+  spng_ctx_free(ctx);
 }
 
 bool media_manager::is_playing() {
