@@ -40,7 +40,7 @@ Wifi_Config wifi_config;
 
 void playback_loop()
 {
-  State& state = State::getInstance();
+  State &state = State::getInstance();
 
   while (true)
   {
@@ -74,7 +74,7 @@ void playback_loop()
 
 void debounce_and_check_buttons()
 {
-  State& state = State::getInstance();
+  State &state = State::getInstance();
 
   bool button1_pressed = !gpio_get(PIN_BUTTON1);
   bool button2_pressed = !gpio_get(PIN_BUTTON2);
@@ -125,52 +125,52 @@ int main()
   cyw43_arch_init();
   // Serial::init();
 
-
   // The pico will start when you start the terminal
   while (!stdio_usb_connected());
 
   wifi_config.setup_access_point();
 
-    // Initialise web server
-    httpd_init();
-    printf("Http server initialised\n");
-    cgi_init();
-    printf("CGI Handler initialised\n");
+  // Initialise web server
+  httpd_init();
+  printf("Http server initialised\n");
+  cgi_init();
+  printf("CGI Handler initialised\n");
 
-  while (true)
+  State &state = State::getInstance();
+  while (state.switch_cyw43_mode == false)
   {
     sys_check_timeouts();
     cyw43_arch_poll();
     sleep_ms(100);
   }
-  
-/*
-
-  manager.init();
 
   if (!Wifi::connect(WIFI_SSID, WIFI_PASS))
   {
     printf("Connect wifi error\n");
   }
-  manager.get_playlist();
 
-  gpio_init(PIN_BUTTON1);
-  gpio_set_dir(PIN_BUTTON1, GPIO_IN);
-  gpio_pull_up(PIN_BUTTON1);
+  /*
 
-  gpio_init(PIN_BUTTON2);
-  gpio_set_dir(PIN_BUTTON2, GPIO_IN);
-  gpio_pull_up(PIN_BUTTON2);
+    manager.init();
+    manager.get_playlist();
 
-  gpio_init(PIN_BUTTON3);
-  gpio_set_dir(PIN_BUTTON3, GPIO_IN);
-  gpio_pull_up(PIN_BUTTON3);
+    gpio_init(PIN_BUTTON1);
+    gpio_set_dir(PIN_BUTTON1, GPIO_IN);
+    gpio_pull_up(PIN_BUTTON1);
 
-  gpio_init(PIN_BUTTON4);
-  gpio_set_dir(PIN_BUTTON4, GPIO_IN);
-  gpio_pull_up(PIN_BUTTON4);
+    gpio_init(PIN_BUTTON2);
+    gpio_set_dir(PIN_BUTTON2, GPIO_IN);
+    gpio_pull_up(PIN_BUTTON2);
 
-  multicore_launch_core1(playback_loop);
-  event_loop();
-  */
+    gpio_init(PIN_BUTTON3);
+    gpio_set_dir(PIN_BUTTON3, GPIO_IN);
+    gpio_pull_up(PIN_BUTTON3);
+
+    gpio_init(PIN_BUTTON4);
+    gpio_set_dir(PIN_BUTTON4, GPIO_IN);
+    gpio_pull_up(PIN_BUTTON4);
+
+    multicore_launch_core1(playback_loop);
+    event_loop();
+    */
 }
