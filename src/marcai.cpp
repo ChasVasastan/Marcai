@@ -5,18 +5,16 @@
 #include "pico/cyw43_arch.h"
 #include "lwip/timeouts.h"
 #include "pico/multicore.h"
+#include "lwip/apps/httpd.h"
+#include "lwipopts.h"
 
 #include "media_manager.h"
 #include "wifi.h"
 #include "state.h"
 // #include "serial.h"
-
 #include "wifi_config.h"
-
-#include "lwip/apps/httpd.h"
-#include "lwipopts.h"
-#include "ssi.h"
 #include "cgi.h"
+#include "write_flash.h"
 
 enum
 {
@@ -37,6 +35,7 @@ static uint64_t last_press_time = 0;
 
 media_manager manager;
 Wifi_Config wifi_config;
+extern Write_Flash write_flash;
 
 void playback_loop()
 {
@@ -128,26 +127,52 @@ int main()
   // The pico will start when you start the terminal
   while (!stdio_usb_connected());
 
-  wifi_config.setup_access_point();
+  std::string ssid;
+  std::string password;
 
-  // Initialise web server
-  httpd_init();
-  printf("Http server initialised\n");
-  cgi_init();
-  printf("CGI Handler initialised\n");
-
-  State &state = State::getInstance();
-  while (state.switch_cyw43_mode == false)
+  printf("Attempting to load wifi credentials from flash...\n");
+  if (write_flash.load_credentials(ssid, password))
   {
-    sys_check_timeouts();
-    cyw43_arch_poll();
-    sleep_ms(100);
+    printf("Loaded credentials, now trying to connect with them %s\n", ssid.c_str());
+    if (!Wifi::connect(ssid, password))
+    {
+      printf("Connect wifi error\n");
+    }
+  } else {
+    printf("The credentials did not match or were not found, setting up access point\n");
+
+    wifi_config.setup_access_point();
+
+    // Initialise web server
+    httpd_init();
+    printf("Http server initialised\n");
+    cgi_init();
+    printf("CGI Handler initialised\n");
+
+    State &state = State::getInstance();
+
+    while (state.switch_cyw43_mode == false)
+    {
+      sys_check_timeouts();
+      cyw43_arch_poll();
+      sleep_ms(100);
+    } 
+
+    printf("Switching to STA mode and attempting to load credentials from flash\n");
+
+    if (write_flash.load_credentials(ssid, password)) {
+      printf("Loaded credentials after mode switch, SSID: %s\n", ssid.c_str());
+      if (!Wifi::connect(ssid, password))
+      {
+        printf("Connect wifi error\n");
+      }
+    } else 
+    {
+      printf("Failed to load wifi credentials afte mode switch");
+    }
   }
 
-  if (!Wifi::connect(WIFI_SSID, WIFI_PASS))
-  {
-    printf("Connect wifi error\n");
-  }
+
 
   /*
 
