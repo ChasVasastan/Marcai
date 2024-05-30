@@ -42,8 +42,8 @@ private:
 
 public:
   void init();
+  void start_pixels();
   void display(uint16_t *data, size_t size);
-  void display_row(uint16_t row, uint16_t *data, size_t size);
   void clear(uint16_t colour);
   void vertical_scroll(uint16_t offset);
 };

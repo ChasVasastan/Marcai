@@ -14,22 +14,19 @@ add_executable(${PROJECT_NAME}
   src/marcai.cpp
   src/audio.cpp
   src/wifi.cpp
-  src/http_client.cpp
   src/http_request.cpp
   src/serial.cpp
   src/media_manager.cpp
-  lib/cJSON/cJSON.c
-  lib/ezxml/ezxml.c
   src/screen.cpp
   src/image.cpp
 
   # dependencies
+  lib/cJSON/cJSON.c
+  lib/ezxml/ezxml.c
   lib/libspng/spng/spng.c
   lib/miniz/miniz.c
   lib/miniz/miniz_tinfl.c
 )
-
-add_compile_definitions(EZXML_NOMMAP)
 
 add_compile_definitions(
   EZXML_NOMMAP

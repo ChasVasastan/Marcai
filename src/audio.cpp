@@ -28,7 +28,7 @@ Audio::Audio() {
 
   // Check for valid channel connection to speaker and starts
   // processing the buffer
-  buffer_pool_ = audio_new_producer_pool(&producer_format_, 10, kMaxFrameSize);
+  buffer_pool_ = audio_new_producer_pool(&producer_format_, 5, kMaxFrameSize);
 }
 
 Audio::~Audio() {

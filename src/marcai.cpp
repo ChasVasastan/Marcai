@@ -10,9 +10,6 @@
 #include "wifi.h"
 #include "state.h"
 // #include "serial.h"
-#include "http_client.h"
-#include "audio.h"
-#include "screen.h"
 
 enum
 {
@@ -32,7 +29,6 @@ const uint DEBOUNCE_TIME_MS = 200;
 static uint64_t last_press_time = 0;
 
 media_manager manager;
-Screen screen;
 
 void playback_loop()
 {
@@ -123,6 +119,7 @@ int main()
 {
   stdio_init_all();
   cyw43_arch_init();
+  manager.init();
 
   if (!Wifi::connect(WIFI_SSID, WIFI_PASS))
   {
@@ -130,10 +127,7 @@ int main()
   }
 
   // The pico will start when you start the terminal
-  while (!stdio_usb_connected());
-  screen.init();
-  screen.clear(0xf81f);
-  manager.init();
+  //while (!stdio_usb_connected());
 
   manager.get_playlist();
   manager.get_album_cover("https://marcai.blob.core.windows.net/image/marcai.png");

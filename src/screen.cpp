@@ -32,20 +32,16 @@ void Screen::init() {
 void Screen::clear(uint16_t colour) {
   st7789_start_pixels(pio, sm);
   for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
-    st7789_lcd_put(pio, sm, colour & 0xff);
     st7789_lcd_put(pio, sm, colour >> 8);
+    st7789_lcd_put(pio, sm, colour & 0xff);
   }
 }
 
-void Screen::display_row(uint16_t row, uint16_t* data, size_t size) {
-  for (int i = 0; i < size; i++) {
-    st7789_lcd_put(pio, sm, data[i] >> 8);
-    st7789_lcd_put(pio, sm, data[i] & 0xff);
-  }
+void Screen::start_pixels() {
+  st7789_start_pixels(pio, sm);
 }
 
 void Screen::display(uint16_t* data, size_t size) {
-  st7789_start_pixels(pio, sm);
   for (int i = 0; i < size; i++) {
     st7789_lcd_put(pio, sm, data[i] >> 8);
     st7789_lcd_put(pio, sm, data[i] & 0xff);

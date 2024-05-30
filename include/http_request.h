@@ -9,6 +9,7 @@
 #include <cstdint>
 
 #include "lwip/ip_addr.h"
+#include "lwip/altcp.h"
 
 struct altcp_pcb;
 struct pbuf;
@@ -27,15 +28,12 @@ enum class state {
   FAILED,
 };
 
-class client;
 
 class request {
 public:
-  friend class http::client;
   request();
   ~request();
 
-  http::client *client;
   std::string hostname;
   std::string method = "GET";
   std::string path = "/";
@@ -53,13 +51,14 @@ public:
   volatile http::state state;
   int content_length;
 
-  void abort_request();
+  void abort();
 
   // body functions
   size_t read(uint8_t *dst, size_t size);
   size_t peek(uint8_t *dst, size_t size);
   size_t skip(size_t size);
 
+  static void send(http::request *req);
 
 private:
   int body_rx;
@@ -70,6 +69,11 @@ private:
   void add_header(std::string header);
   size_t transfer_chunked(int offset);
   size_t transfer_body(int offset, size_t size);
+
+  static err_t recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err);
+  static err_t altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err);
+  static void dns_resolve_callback(const char* hostname, const ip_addr_t *ipaddr, void *arg);
+  static void tls_tcp_setup(http::request *req, const ip_addr_t *addr);
 };
 
 } // namespace http

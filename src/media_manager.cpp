@@ -1,7 +1,5 @@
 #include "audio.h"
 #include "ezxml.h"
-#include "hardware/flash.h"
-#include "http_client.h"
 #include "http_request.h"
 #include "image.h"
 #include "media_manager.h"
@@ -11,25 +9,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <malloc.h>
 #include <vector>
-
-extern Screen screen;
-
-uint32_t getTotalHeap(void) {
-  extern char __StackLimit, __bss_end__;
-  return &__StackLimit  - &__bss_end__;
-}
-
-uint32_t getFreeHeap(void) {
-  struct mallinfo m = mallinfo();
-  return getTotalHeap() - m.uordblks;
-}
 
 void media_manager::play(http::url url)
 {
   if (req) {
-    req->abort_request();
+    req->abort();
     delete req;
   }
 
@@ -52,13 +37,11 @@ void media_manager::play(http::url url)
   }
 
   req = new http::request;
-
-  req->client = &http_client;
   req->hostname = host.c_str();
   req->path = path.c_str();
   req->method = "GET";
 
-  http_client.request(req);
+  http::request::send(req);
   playing = true;
 }
 
@@ -69,6 +52,10 @@ http::url media_manager::generate_url(std::string keywords)
 
 void media_manager::get_playlist()
 {
+  if (req) {
+    req->abort();
+    delete req;
+  }
 
   // Change this to the desired target
   char host[] = "marcai.blob.core.windows.net";
@@ -89,25 +76,25 @@ void media_manager::get_playlist()
     ezxml_free(xml);
   };
 
-  http::request req;
-  req.client = &http_client;
-  req.hostname = host;
-  req.path = "/audio?comp=list&prefix=mono";
-  req.method = "GET";
-  req.callback_body = playlist_body;
-  req.arg = &body;
-  req.callback_result = decode_playlist;
+  req = new http::request;
+  req->hostname = host;
+  req->path = "/audio?comp=list&prefix=mono";
+  req->method = "GET";
+  req->callback_body = playlist_body;
+  req->arg = &body;
+  req->callback_result = decode_playlist;
 
-  http_client.request(&req);
+  http::request::send(req);
 
   // wait blocking for request to finish
-  while (req.state != http::state::DONE && req.state != http::state::FAILED);
+  while (req->state != http::state::DONE && req->state != http::state::FAILED);
+
+  delete req;
+  req = nullptr;
 }
 
 void media_manager::play()
 {
-  if (playlist.empty())
-    return;
   if (playlist_index >= playlist.size())
   {
     playlist_index = 0;
@@ -120,7 +107,7 @@ void media_manager::play()
 void media_manager::stop()
 {
   if (req) {
-    req->abort_request();
+    req->abort();
     delete req;
   }
   req = nullptr;
@@ -131,7 +118,7 @@ void media_manager::next()
 {
   playlist_index++;
   if (req) {
-    req->abort_request();
+    req->abort();
     delete req;
   }
   req = nullptr;
@@ -142,7 +129,7 @@ void media_manager::previous()
 {
   playlist_index--;
   if (req) {
-    req->abort_request();
+    req->abort();
     delete req;
   }
   req = nullptr;
@@ -152,10 +139,16 @@ void media_manager::previous()
 void media_manager::init()
 {
   audio.init_i2s();
+  screen.init();
+  screen.clear(0x0084);
 }
 
 void media_manager::get_album_cover(http::url url) {
-  http::request req;
+  if (req) {
+    req->abort();
+    delete req;
+  }
+
   // Memory address for flash data
   if (auto npos = url.find("https://"); npos != std::string::npos) {
     url = url.substr(npos+8, url.length());
@@ -167,13 +160,12 @@ void media_manager::get_album_cover(http::url url) {
     path = url.substr(npos, url.length());
   }
 
-  req.client = &http_client;
-  req.hostname = host.c_str();
-  req.path = path.c_str();
-  req.method = "GET";
+  req = new http::request;
+  req->hostname = host;
+  req->path = path;
+  req->method = "GET";
 
-  http_client.request(&req);
-
+  http::request::send(req);
   int error;
   spng_ctx *ctx;
   uint32_t offset = 0;
@@ -182,36 +174,44 @@ void media_manager::get_album_cover(http::url url) {
     auto req = reinterpret_cast<http::request*>(arg);
     int offset = 0;
 
-    // if (req->status != 200)
-    //   return static_cast<int>(SPNG_IO_ERROR);
     do {
-      printf("PNG data %d (%ld)", offset, size);
-      int len = req->peek(reinterpret_cast<uint8_t*>(dst) + offset,
+      if (req->state != http::state::STATUS && req->status != 200) {
+        printf("No available cover. status = %d\n", req->status);
+        return static_cast<int>(SPNG_IO_ERROR);
+      }
+
+      printf("PNG data %ld (%d)...", size, offset);
+      uint32_t ints = save_and_disable_interrupts();
+      int len = req->read(reinterpret_cast<uint8_t*>(dst) + offset,
                           size - offset);
       offset += len;
-      printf(" read %d\n", len);
+      restore_interrupts(ints);
     } while (offset < size);
-    req->skip(size);
     return static_cast<int>(SPNG_OK);
   };
 
   ctx = spng_ctx_new(0);
-  spng_set_png_stream(ctx, decode_png_stream, &req);
+  spng_set_png_stream(ctx, decode_png_stream, req);
   spng_decode_image(ctx, NULL, 0, SPNG_FMT_RGB8, SPNG_DECODE_PROGRESSIVE);
   spng_get_ihdr(ctx, &ihdr);
   printf("PNG image (%d,%d)\n", ihdr.width, ihdr.height);
+  screen.start_pixels();
   for (int i = 0; i < ihdr.height; ++i) {
     std::vector<uint8_t> rgb888(240 * 3);
     error = spng_decode_row(ctx, rgb888.data(), rgb888.size());
+    if (error != SPNG_OK && error != SPNG_EOI) {
+      printf("Invalid return (%s)\n", spng_strerror(error));
+      break;
+    }
     std::vector<uint16_t> rgb565 = Image::convert_rgb888_to_rgb565(rgb888);
-    // Display image data on screen, first row initiate screen write
-    // and subsequent rows just write data
-    if (i == 0)
-      screen.display(rgb565.data(), rgb565.size());
-    else
-      screen.display_row(i, rgb565.data(), rgb565.size());
+    uint32_t ints = save_and_disable_interrupts();
+    screen.display(rgb565.data(), rgb565.size());
+    restore_interrupts(ints);
   }
   spng_ctx_free(ctx);
+
+  delete req;
+  req = nullptr;
 }
 
 bool media_manager::is_playing() {
