@@ -28,7 +28,7 @@ Audio::Audio() {
 
   // Check for valid channel connection to speaker and starts
   // processing the buffer
-  buffer_pool_ = audio_new_producer_pool(&producer_format_, 10, kMaxFrameSize);
+  buffer_pool_ = audio_new_producer_pool(&producer_format_, 5, kMaxFrameSize);
 }
 
 Audio::~Audio() {
@@ -85,21 +85,13 @@ int Audio::stream_decode(uint8_t *data, int size) {
     for (int i = info.outputSamps - 1; i > 0; --i)
     {
       samples[i * 2] = samples[i];
-      // samples[i * 2 + 1] = 0;
+      samples[i * 2 + 1] = samples[i];
     }
   }
 
   // Set decoded sample count and release buffer
   buffer->sample_count = info.outputSamps / info.nChans;
   give_audio_buffer(buffer_pool_, buffer);
-
-  // Check if we need to change the song
-  State &state = State::getInstance();
-  if (state.play_next_song_flag || state.play_previous_song_flag) {
-    free(buffer);
-    printf("Trying to play next or previous song\n");
-    return 0;
-  }
 
   return info.size;
 }

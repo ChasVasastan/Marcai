@@ -14,16 +14,26 @@ add_executable(${PROJECT_NAME}
   src/marcai.cpp
   src/audio.cpp
   src/wifi.cpp
-  src/http_client.cpp
   src/http_request.cpp
   src/serial.cpp
   src/media_manager.cpp
+  src/screen.cpp
+  src/image.cpp
+
+  # dependencies
   lib/cJSON/cJSON.c
   lib/ezxml/ezxml.c
+  lib/libspng/spng/spng.c
+  lib/miniz/miniz.c
+  lib/miniz/miniz_tinfl.c
 )
 
-add_compile_definitions(EZXML_NOMMAP)
-
+add_compile_definitions(
+  EZXML_NOMMAP
+  SPNG_USE_MINIZ
+  SPNG_DISABLE_OPT
+)
+add_subdirectory(lib/miniz)
 add_subdirectory(lib/picomp3lib/src)
 
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
@@ -37,7 +47,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/lib/picomp3lib/src
   ${CMAKE_CURRENT_LIST_DIR}/lib/cJSON
   ${CMAKE_CURRENT_LIST_DIR}/lib/ezxml
+  ${CMAKE_CURRENT_LIST_DIR}/lib/miniz
+  ${CMAKE_BINARY_DIR}/lib/miniz
+  ${CMAKE_CURRENT_LIST_DIR}/lib/libspng/spng
 )
+pico_generate_pio_header(${PROJECT_NAME}
+  ${CMAKE_CURRENT_LIST_DIR}/st7789_lcd.pio)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_stdlib
@@ -49,6 +64,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pico_lwip_http
   pico_lwip_mbedtls
   pico_mbedtls
+  hardware_sync
+  hardware_flash
 )
 
 add_custom_target(${PROJECT_NAME}_flash

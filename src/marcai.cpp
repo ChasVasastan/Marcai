@@ -32,6 +32,7 @@ media_manager manager;
 
 void playback_loop()
 {
+  printf("Start playback loop\n");
   State& state = State::getInstance();
 
   while (true)
@@ -60,7 +61,11 @@ void playback_loop()
       state.play_previous_song_flag = false;
       manager.previous();
     }
-    sleep_ms(20);
+
+    if (manager.is_playing())
+    {
+      manager.currently_playing();
+    }
   }
 }
 
@@ -107,7 +112,6 @@ void event_loop()
   {
     sys_check_timeouts();
     debounce_and_check_buttons();
-    sleep_ms(10);
   }
 }
 
@@ -115,11 +119,6 @@ int main()
 {
   stdio_init_all();
   cyw43_arch_init();
-  // Serial::init();
-
-  // The pico will start when you start the terminal
-  while (!stdio_usb_connected());
-
   manager.init();
 
   if (!Wifi::connect(WIFI_SSID, WIFI_PASS))
@@ -127,7 +126,11 @@ int main()
     printf("Connect wifi error\n");
   }
 
+  // The pico will start when you start the terminal
+  //while (!stdio_usb_connected());
+
   manager.get_playlist();
+  manager.get_album_cover("https://marcai.blob.core.windows.net/image/marcai.png");
 
   gpio_init(PIN_BUTTON1);
   gpio_set_dir(PIN_BUTTON1, GPIO_IN);
@@ -145,6 +148,6 @@ int main()
   gpio_set_dir(PIN_BUTTON4, GPIO_IN);
   gpio_pull_up(PIN_BUTTON4);
 
-  multicore_launch_core1(playback_loop);
-  event_loop();
+  multicore_launch_core1(event_loop);
+  playback_loop();
 }
