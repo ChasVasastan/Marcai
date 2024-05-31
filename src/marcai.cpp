@@ -38,7 +38,8 @@ Wifi_Config wifi_config;
 
 void playback_loop()
 {
-  State &state = State::getInstance();
+  printf("Start playback loop\n");
+  State& state = State::getInstance();
 
   while (true)
   {
@@ -66,7 +67,11 @@ void playback_loop()
       state.play_previous_song_flag = false;
       manager.previous();
     }
-    sleep_ms(20);
+
+    if (manager.is_playing())
+    {
+      manager.currently_playing();
+    }
   }
 }
 
@@ -113,7 +118,6 @@ void event_loop()
   {
     sys_check_timeouts();
     debounce_and_check_buttons();
-    sleep_ms(10);
   }
 }
 
@@ -128,6 +132,8 @@ int main()
 
   std::string ssid;
   std::string password;
+
+  manager.init();
 
   printf("Attempting to load wifi credentials from flash...\n");
   if (write_flash.load_credentials(ssid, password))
@@ -172,29 +178,25 @@ int main()
   }
 
 
+  manager.get_playlist();
+  manager.get_album_cover("https://marcai.blob.core.windows.net/image/marcai.png");
 
-  /*
+  gpio_init(PIN_BUTTON1);
+  gpio_set_dir(PIN_BUTTON1, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON1);
 
-    manager.init();
-    manager.get_playlist();
+  gpio_init(PIN_BUTTON2);
+  gpio_set_dir(PIN_BUTTON2, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON2);
 
-    gpio_init(PIN_BUTTON1);
-    gpio_set_dir(PIN_BUTTON1, GPIO_IN);
-    gpio_pull_up(PIN_BUTTON1);
+  gpio_init(PIN_BUTTON3)
+  gpio_set_dir(PIN_BUTTON3, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON3);
+  
+  gpio_init(PIN_BUTTON4);
+  gpio_set_dir(PIN_BUTTON4, GPIO_IN);
+  gpio_pull_up(PIN_BUTTON4);
 
-    gpio_init(PIN_BUTTON2);
-    gpio_set_dir(PIN_BUTTON2, GPIO_IN);
-    gpio_pull_up(PIN_BUTTON2);
-
-    gpio_init(PIN_BUTTON3);
-    gpio_set_dir(PIN_BUTTON3, GPIO_IN);
-    gpio_pull_up(PIN_BUTTON3);
-
-    gpio_init(PIN_BUTTON4);
-    gpio_set_dir(PIN_BUTTON4, GPIO_IN);
-    gpio_pull_up(PIN_BUTTON4);
-
-    multicore_launch_core1(playback_loop);
-    event_loop();
-    */
+  multicore_launch_core1(event_loop);
+  playback_loop();
 }

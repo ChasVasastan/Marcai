@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <string>
 
-
 void Serial::init() {
   uart_init(uart0, 115200);
   gpio_set_function(0, GPIO_FUNC_UART);

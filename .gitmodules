@@ -7,3 +7,9 @@
 [submodule "lib/ezxml"]
 	path = lib/ezxml
 	url = https://github.com/lxfontes/ezxml.git
+[submodule "lib/miniz"]
+	path = lib/miniz
+	url = https://github.com/randy408/miniz.git
+[submodule "lib/libspng"]
+	path = lib/libspng
+	url = https://github.com/randy408/libspng.git
