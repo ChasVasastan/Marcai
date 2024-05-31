@@ -64,7 +64,7 @@ void playback_loop()
 
     if (manager.is_playing())
     {
-      manager.continue_playing();
+      manager.currently_playing();
     }
   }
 }

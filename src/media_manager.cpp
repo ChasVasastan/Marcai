@@ -217,7 +217,7 @@ bool media_manager::is_playing() {
    return playing;
 }
 
-void media_manager::continue_playing() {
+void media_manager::currently_playing() {
   if (req) {
     uint8_t buffer[1024];
     size_t size = req->peek(buffer, sizeof(buffer));

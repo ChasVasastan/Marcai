@@ -29,7 +29,7 @@ public:
   void previous();
   void init();
   void get_album_cover(http::url url);
-  void continue_playing();
+  void currently_playing();
   bool is_playing();
 };
 
