@@ -23,9 +23,6 @@ void Write_Flash::save_credentials(const std::string &ssid, const std::string pa
 
 bool Write_Flash::load_credentials(std::string &ssid, std::string &password)
 {
-  // TODO
-  // Why does this not show the credentials?
-  printf("load_credentials received SSID: %s and Password: %s\n", ssid.c_str(), password.c_str());
   
   char data[FLASH_PAGE_SIZE];
   const uint8_t *flash_target_contents = reinterpret_cast<const uint8_t*>(XIP_BASE + FLASH_TARGET_OFFSET);
@@ -38,6 +35,7 @@ bool Write_Flash::load_credentials(std::string &ssid, std::string &password)
   {
     ssid = ssid_buf;
     password = password_buf;
+    printf("load_credentials received SSID: %s and Password: %s\n", ssid.c_str(), password.c_str());
     return !ssid.empty() && !password.empty();
   }
     return false;
