@@ -149,7 +149,6 @@ void media_manager::get_album_cover(http::url url) {
     delete req;
   }
 
-  // Memory address for flash data
   if (auto npos = url.find("https://"); npos != std::string::npos) {
     url = url.substr(npos+8, url.length());
   }
