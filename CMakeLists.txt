@@ -17,6 +17,9 @@ add_executable(${PROJECT_NAME}
   src/http_request.cpp
   src/serial.cpp
   src/media_manager.cpp
+  src/wifi_config.cpp
+  src/write_flash.cpp
+  src/cgi.cpp
   src/screen.cpp
   src/image.cpp
 
@@ -28,16 +31,25 @@ add_executable(${PROJECT_NAME}
   lib/miniz/miniz_tinfl.c
 )
 
+
+# Ensure makefsdata.py is run before compiling the project
+message("Running makefsdata python script")
+execute_process(COMMAND
+    python3 ./makefsdata.py
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+)
+
 add_compile_definitions(
   EZXML_NOMMAP
   SPNG_USE_MINIZ
   SPNG_DISABLE_OPT
 )
+
 add_subdirectory(lib/miniz)
 add_subdirectory(lib/picomp3lib/src)
 
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
-pico_enable_stdio_uart(${PROJECT_NAME} 1)
+pico_enable_stdio_uart(${PROJECT_NAME} 0)
 
 pico_add_extra_outputs(${PROJECT_NAME})
 

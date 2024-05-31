@@ -96,4 +96,14 @@
 #define LWIP_TIMERS                 1
 #define SYS_LIGHTWEIGHT_PROT        1
 
+#define LWIP_HTTPD 1
+#define LWIP_HTTPD_CGI 1
+#define LWIP_HTTPD_SSI 1
+#define LWIP_HTTPD_FS 1
+#define LWIP_HTTPD_SSI_INCLUDE_TAG 0
+
+#define HTTPD_FSDATA_FILE "htmldata.c"
+
+#define LWIP_DHCP_SERVER 1
+
 #endif /* __LWIPOPTS_H__ */

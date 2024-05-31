@@ -14,6 +14,7 @@ public:
     volatile bool play_previous_song_flag = false;
     volatile bool play_song_flag = false;
     volatile bool stop_song_flag = false;
+    volatile bool switch_cyw43_mode = false;
 
 private:
     State() = default;

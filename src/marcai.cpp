@@ -5,11 +5,16 @@
 #include "pico/cyw43_arch.h"
 #include "lwip/timeouts.h"
 #include "pico/multicore.h"
+#include "lwip/apps/httpd.h"
+#include "lwipopts.h"
 
 #include "media_manager.h"
 #include "wifi.h"
 #include "state.h"
 // #include "serial.h"
+#include "wifi_config.h"
+#include "cgi.h"
+#include "write_flash.h"
 
 enum
 {
@@ -29,6 +34,7 @@ const uint DEBOUNCE_TIME_MS = 200;
 static uint64_t last_press_time = 0;
 
 media_manager manager;
+Wifi_Config wifi_config;
 
 void playback_loop()
 {
@@ -71,7 +77,7 @@ void playback_loop()
 
 void debounce_and_check_buttons()
 {
-  State& state = State::getInstance();
+  State &state = State::getInstance();
 
   bool button1_pressed = !gpio_get(PIN_BUTTON1);
   bool button2_pressed = !gpio_get(PIN_BUTTON2);
@@ -119,15 +125,58 @@ int main()
 {
   stdio_init_all();
   cyw43_arch_init();
-  manager.init();
-
-  if (!Wifi::connect(WIFI_SSID, WIFI_PASS))
-  {
-    printf("Connect wifi error\n");
-  }
+  // Serial::init();
 
   // The pico will start when you start the terminal
-  //while (!stdio_usb_connected());
+  while (!stdio_usb_connected());
+
+  std::string ssid;
+  std::string password;
+
+  manager.init();
+
+  printf("Attempting to load wifi credentials from flash...\n");
+  if (write_flash.load_credentials(ssid, password))
+  {
+    printf("Loaded credentials, now trying to connect with them %s\n", ssid.c_str());
+    if (!Wifi::connect(ssid, password))
+    {
+      printf("Connect wifi error\n");
+    }
+  } else {
+    printf("The credentials did not match or were not found, setting up access point\n");
+
+    wifi_config.setup_access_point();
+
+    // Initialise web server
+    httpd_init();
+    printf("Http server initialised\n");
+    cgi_init();
+    printf("CGI Handler initialised\n");
+
+    State &state = State::getInstance();
+
+    while (state.switch_cyw43_mode == false)
+    {
+      sys_check_timeouts();
+      cyw43_arch_poll();
+      sleep_ms(100);
+    } 
+
+    printf("Switching to STA mode and attempting to load credentials from flash\n");
+
+    if (write_flash.load_credentials(ssid, password)) {
+      printf("Loaded credentials after mode switch, SSID: %s\n", ssid.c_str());
+      if (!Wifi::connect(ssid, password))
+      {
+        printf("Connect wifi error\n");
+      }
+    } else 
+    {
+      printf("Failed to load wifi credentials afte mode switch");
+    }
+  }
+
 
   manager.get_playlist();
   manager.get_album_cover("https://marcai.blob.core.windows.net/image/marcai.png");
@@ -140,10 +189,10 @@ int main()
   gpio_set_dir(PIN_BUTTON2, GPIO_IN);
   gpio_pull_up(PIN_BUTTON2);
 
-  gpio_init(PIN_BUTTON3);
+  gpio_init(PIN_BUTTON3)
   gpio_set_dir(PIN_BUTTON3, GPIO_IN);
   gpio_pull_up(PIN_BUTTON3);
-
+  
   gpio_init(PIN_BUTTON4);
   gpio_set_dir(PIN_BUTTON4, GPIO_IN);
   gpio_pull_up(PIN_BUTTON4);

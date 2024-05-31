@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Marcai Wi-Fi</title>
+</head>
+
+<body>
+    <h1>Configure Wi-Fi for Marcai</h1>
+    <form action="/submit.cgi" method="get">
+        <label for="ssid">SSID:</label>
+        <input type="text" id="ssid" name="ssid" required><br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br><br>
+        <input type="submit" value="Connect">
+    </form>
+</body>
+</html>
