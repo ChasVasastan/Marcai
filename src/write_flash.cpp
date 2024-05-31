@@ -5,12 +5,6 @@
 #include <cstring>
 #include <cstdio>
 
-Write_Flash write_flash;
-
-Write_Flash::Write_Flash() 
-  : flash_target_contents(reinterpret_cast<const uint8_t*>(XIP_BASE + FLASH_TARGET_OFFSET))
-{
-}
 
 void Write_Flash::save_credentials(const std::string &ssid, const std::string password)
 {
@@ -34,12 +28,13 @@ bool Write_Flash::load_credentials(std::string &ssid, std::string &password)
   printf("load_credentials received SSID: %s and Password: %s\n", ssid.c_str(), password.c_str());
   
   char data[FLASH_PAGE_SIZE];
+  const uint8_t *flash_target_contents = reinterpret_cast<const uint8_t*>(XIP_BASE + FLASH_TARGET_OFFSET);
   std::memcpy(data, flash_target_contents, FLASH_PAGE_SIZE);
 
-  char ssid_buf[32] = {0};
+  char ssid_buf[33] = {0};
   char password_buf[64] = {0};
 
-  if (std::sscanf(data, "SSID:%31[^;];PASSWORD:%63[^;];", ssid_buf, password_buf) == 2)
+  if (std::sscanf(data, "SSID:%32[^;];PASSWORD:%63[^;];", ssid_buf, password_buf) == 2)
   {
     ssid = ssid_buf;
     password = password_buf;

@@ -42,7 +42,7 @@ const char *cgi_configure_handler(int iIndex, int iNumParams, char *pcParam[], c
     printf("The data entered on the website: SSID: %s, Password: %s\n", new_ssid, password);
 
     printf("Saving Wi-Fi credentials to flash memory\n");
-    write_flash.save_credentials(new_ssid, password);
+    Write_Flash::save_credentials(new_ssid, password);
 
     // Signal to switch the Wi-Fi mode
     State &state = State::getInstance();

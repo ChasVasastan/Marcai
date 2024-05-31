@@ -35,7 +35,6 @@ static uint64_t last_press_time = 0;
 
 media_manager manager;
 Wifi_Config wifi_config;
-extern Write_Flash write_flash;
 
 void playback_loop()
 {
