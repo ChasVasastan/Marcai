@@ -15,19 +15,18 @@ public:
   Audio();
   ~Audio();
 
-  /** \brief Initialise I2S audio
+  /** @brief Initialise I2S audio
    */
   bool init_i2s();
 
-  /** \brief Decode one frame of mp3 and play it
-   * \param data buffer with mp3 data
-   * \param size count of available buffer data
-   * \return Size of consumed bytes or -1 on error
+  /** @brief Decode one frame of mp3 and play it
+   *
+   * @param data buffer with mp3 data
+   * @param size count of available buffer data
+   * @return Size of consumed bytes or -1 on error
    */
   int stream_decode(uint8_t *data, int size);
 
-  void play();
-  void pause();
 private:
   enum {
     kMaxFrameSize = 1152 * 2, // Size of one stereo frame
