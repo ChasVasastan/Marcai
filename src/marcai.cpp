@@ -16,6 +16,7 @@
 #include "write_flash.h"
 #include "serial.h"
 
+// Enum for gesture control
 enum
 {
   GESTURE_NONE = -1,
@@ -25,16 +26,21 @@ enum
   GESTURE_RIGHT = 3
 };
 
+// Button GPIO pins
 const uint PIN_BUTTON1 = 2;
 const uint PIN_BUTTON2 = 3;
 const uint PIN_BUTTON3 = 4;
 const uint PIN_BUTTON4 = 5;
 
+// Debounce time for button press
 const uint DEBOUNCE_TIME_MS = 200;
 static uint64_t last_press_time = 0;
 
 media_manager manager;
 
+/**
+ * @brief Playback loop for handling play, stop, next and previous actions.
+*/
 void playback_loop()
 {
   printf("Start playback loop\n");
@@ -74,6 +80,9 @@ void playback_loop()
   }
 }
 
+/**
+ * @brief Debounce button presses and set appropriate flags in the state.
+*/
 void debounce_and_check_buttons()
 {
   State &state = State::getInstance();
@@ -111,6 +120,9 @@ void debounce_and_check_buttons()
   }
 }
 
+/**
+ * @brief Event loop for checking timeouts and button states, ran on second core.
+*/
 void event_loop()
 {
   while (true)
@@ -120,6 +132,9 @@ void event_loop()
   }
 }
 
+/**
+ * @brief Main event loop for checking timeouts, button state and handle the wifi connection.
+*/
 int main()
 {
   stdio_init_all();

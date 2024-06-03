@@ -7,6 +7,21 @@
 #include "state.h"
 #include "write_flash.h"
 
+/**
+ * @brief CGI handler that configures and receives input from the website.
+ * 
+ * The function is called when a CGI request is made to configure the wifi connection.
+ * It receives the enter SSID and password from the request parametes which are linked to the website,
+ * After that, it parses it for any spaces in the password and saves the data to the flash memory,
+ * and signals to the state machine that it is time to switch from AP to STA mode.
+ * 
+ * @param iIndex The index of the CGI handler
+ * @param iNumParams The number of parameters passed along in the request
+ * @param pcParam Array of parameter names
+ * @param pcValue Arra of parameter values
+ * @return const char* Returns the path to the HTML file which will be visible upon hitting submit
+*/
+
 // CGI handler to configure Wi-Fi
 const char *cgi_configure_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]) {
     char ssid[32] = {0};
@@ -57,6 +72,11 @@ static const tCGI cgi_handlers[] = {
     { "/submit.cgi", cgi_configure_handler }
 };
 
+/**
+ * @brief Initializes the CGI handlers.
+ * 
+ * Sets up the handler for the web server.
+*/
 void cgi_init(void) {
     http_set_cgi_handlers(cgi_handlers, sizeof(cgi_handlers) / sizeof(tCGI));
 }

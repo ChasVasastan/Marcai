@@ -17,7 +17,7 @@
 
 uint32_t getTotalHeap(void) {
    extern char __StackLimit, __bss_end__;
-   
+
    return &__StackLimit  - &__bss_end__;
 }
 
@@ -27,6 +27,14 @@ uint32_t getFreeHeap(void) {
    return getTotalHeap() - m.uordblks;
 }
 
+/**
+ * @brief Plays a media file from the given URL.
+ *
+ * If an audio file is being played, it will stop and start playing the next song.
+ * If the URL contains "audio/mono", it will change the path to get the cover image as well.
+ *
+ * @param url The URL of the media file to play.
+*/
 void media_manager::play(http::url url)
 {
   if (req) {
@@ -61,11 +69,23 @@ void media_manager::play(http::url url)
   playing = true;
 }
 
+/**
+ * @brief Generate a URL from the given keywords.
+ *
+ * @param keywords The keywords to generate the URL.
+ * @return http::url The generated URL.
+*/
 http::url media_manager::generate_url(std::string keywords)
 {
   return http::url();
 }
 
+/**
+ * @brief Retrieves the playlist
+ *
+ * This functions get the playlist from the azure database and
+ * access it via xml to display available songs to play
+*/
 void media_manager::get_playlist()
 {
   if (req) {
@@ -107,6 +127,11 @@ void media_manager::get_playlist()
   req = nullptr;
 }
 
+/**
+ * @brief Plays the current song in the playlist.
+ *
+ * If the end of the playlist is reached, it loops back to the start.
+*/
 void media_manager::play()
 {
   if (playlist_index >= playlist.size())
@@ -118,6 +143,11 @@ void media_manager::play()
   play(url);
 }
 
+/**
+ * @brief Stops the currently playing song.
+ *
+ * Aborts the current request and sets playing flag to false.
+*/
 void media_manager::stop()
 {
   if (req) {
@@ -128,6 +158,11 @@ void media_manager::stop()
   playing = false;
 }
 
+/**
+ * @brief Plays the next media file in the playlist.
+ *
+ * If a media file is currently playing, it stops and plays the next one.
+ */
 void media_manager::next()
 {
   playlist_index++;
@@ -139,6 +174,11 @@ void media_manager::next()
   play();
 }
 
+/**
+ * @brief Plays the previous media file in the playlist.
+ *
+ * If a media file is currently playing, it stops and plays the previous one.
+ */
 void media_manager::previous()
 {
   playlist_index--;
@@ -150,6 +190,12 @@ void media_manager::previous()
   play();
 }
 
+
+/**
+ * @brief Initializes the media manager.
+ *
+ * Initializes the audio system, the screen, and clears the screen.
+ */
 void media_manager::init()
 {
   audio.init_i2s();
@@ -157,6 +203,14 @@ void media_manager::init()
   screen.clear(0x0084);
 }
 
+/**
+ * @brief Retrieves and displays album cover of the given URL
+ *
+ * Sends a request to the URL to fetch the album cover image,
+ * and devode the image, and display it on the screen.
+ *
+ * @param url The URL of the album cover image.
+*/
 void media_manager::get_album_cover(http::url url) {
   if (req) {
     req->abort();
@@ -227,10 +281,21 @@ void media_manager::get_album_cover(http::url url) {
   req = nullptr;
 }
 
+/**
+ * @brief Checks if media is currently playing.
+ *
+ * @return true if media is playing, false otherwise.
+ */
 bool media_manager::is_playing() {
    return playing;
 }
 
+
+/**
+ * @brief Processes and plays the currently playing media file.
+ *
+ * This function reads data from the HTTP request and decodes it using the audio stream decoder.
+ */
 void media_manager::currently_playing() {
   if (req) {
     uint8_t buffer[1024];
