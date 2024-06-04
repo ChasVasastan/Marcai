@@ -20,26 +20,37 @@ void Serial::init() {
 
   // Enable irq for rx only
   uart_set_irq_enables(uart0, true, false);
+  printf("Initialised serial\n");
 }
 
 void Serial::uart_on_rx() {
-  std::string line;
+  static std::string line;
   while (uart_is_readable(uart0)) {
-    // Read one char and echo it back
+    // Read one char
     char c = uart_getc(uart0);
     if (c == '\n') {
-       if (auto npos = line.find("gesture: "); npos != std::string::npos) {
-        std::string gesture = line.substr(npos, line.length());
+      const char gesture_str[] = "gesture: ";
+      const char prompt_str[] = "prompt: ";
+      if (auto npos = line.find(gesture_str); npos != std::string::npos) {
+        std::string gesture = line.substr(npos+sizeof(gesture_str)-1, line.length());
+        printf("Got gesture %s\n", gesture.c_str());
         if (gesture == "None") {
         } else if (gesture == "Up") {
         } else if (gesture == "Down") {
         } else if (gesture == "Left") {
         } else if (gesture == "Right") {
         }
+        line.clear();
+      } else if (auto npos = line.find("prompt: "); npos != std::string::npos) {
+        std::string prompt = line.substr(npos+sizeof(prompt_str)-1, line.length());
+        printf("Got prompt %s\n", prompt.c_str());
+        line.clear();
+      } else {
+        printf("%s\n", line.c_str());
+        line.clear();
       }
     } else {
       line.push_back(c);
     }
-    putchar(c);
   }
 }

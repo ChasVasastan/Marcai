@@ -5,6 +5,7 @@
 #include "lwip/timeouts.h"
 #include "pico/cyw43_arch.h"
 #include "pico/multicore.h"
+#include "pico/stdio_usb.h"
 #include "pico/stdlib.h"
 
 #include "cgi.h"
@@ -139,7 +140,7 @@ int main()
 {
   stdio_init_all();
   cyw43_arch_init();
-  // Serial::init();
+  Serial::init();
 
   manager.init();
   {
