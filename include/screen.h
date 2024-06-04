@@ -41,9 +41,28 @@ private:
   static inline void st7789_start_pixels(PIO pio, uint sm);
 
 public:
+
+  /** @brief Initialise screen
+   */
   void init();
+
+  /** @brief Start command for writing pixels
+   */
   void start_pixels();
+
+  /** @brief Write pixels to screen
+   *
+   * @param data source data to write
+   * @param size data size
+   */
   void display(uint16_t *data, size_t size);
+
+  /** @brief Clear screen to colour
+   *
+   * @note Must be initiated by start_pixels() command
+   *
+   * @param colour
+   */
   void clear(uint16_t colour);
   void vertical_scroll(uint16_t offset);
 };

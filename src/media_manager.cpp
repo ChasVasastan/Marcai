@@ -57,8 +57,6 @@ void media_manager::get_playlist()
     delete req;
   }
 
-  // Change this to the desired target
-  char host[] = "marcai.blob.core.windows.net";
   std::vector<char> body;
   auto playlist_body = [&](http::request *req, std::vector<uint8_t> data) {
     body.insert(body.end(), data.begin(), data.end());
@@ -77,7 +75,7 @@ void media_manager::get_playlist()
   };
 
   req = new http::request;
-  req->hostname = host;
+  req->hostname = "marcai.blob.core.windows.net";
   req->path = "/audio?comp=list&prefix=mono";
   req->method = "GET";
   req->callback_body = playlist_body;

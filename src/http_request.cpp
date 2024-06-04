@@ -36,6 +36,8 @@ void request::add_header(std::string header) {
       c = std::tolower(c);
     }
     response_headers[name] = value;
+    if (callback_header)
+      callback_header(this, name, value);
 
     if (name == "content-length") {
       content_length = std::atoi(value.c_str());
