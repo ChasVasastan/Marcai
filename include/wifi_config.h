@@ -8,10 +8,9 @@ class Wifi_Config
 {
 
 public:
-  void setup_access_point();
-  void setting_netif();
-  void connect_to_network(const char *ssid, const char *password);
-  void scan_networks();
+  static void setup_access_point();
+  static void setting_netif();
+  static void scan_networks();
 };
 
 #endif // WIFI_CONFIG_H

@@ -13,6 +13,20 @@
 #include "media_manager.h"
 #include "screen.h"
 
+#include <malloc.h>
+
+uint32_t getTotalHeap(void) {
+   extern char __StackLimit, __bss_end__;
+   
+   return &__StackLimit  - &__bss_end__;
+}
+
+uint32_t getFreeHeap(void) {
+   struct mallinfo m = mallinfo();
+
+   return getTotalHeap() - m.uordblks;
+}
+
 void media_manager::play(http::url url)
 {
   if (req) {
@@ -179,7 +193,7 @@ void media_manager::get_album_cover(http::url url) {
         return static_cast<int>(SPNG_IO_ERROR);
       }
 
-      printf("PNG data %ld (%d)...\n", size, offset);
+      printf("PNG data %ld (%d)...(%d)\n", size, offset, getFreeHeap());
       uint32_t ints = save_and_disable_interrupts();
       int len = req->read(reinterpret_cast<uint8_t*>(dst) + offset,
                           size - offset);

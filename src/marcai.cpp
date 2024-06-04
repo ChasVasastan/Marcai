@@ -34,7 +34,6 @@ const uint DEBOUNCE_TIME_MS = 200;
 static uint64_t last_press_time = 0;
 
 media_manager manager;
-Wifi_Config wifi_config;
 
 void playback_loop()
 {
@@ -127,53 +126,52 @@ int main()
   cyw43_arch_init();
   // Serial::init();
 
-  // The pico will start when you start the terminal
-  while (!stdio_usb_connected());
-
-  std::string ssid;
-  std::string password;
-
   manager.init();
-
-  printf("Attempting to load wifi credentials from flash...\n");
-  if (write_flash.load_credentials(ssid, password))
   {
-    printf("Loaded credentials, now trying to connect with them %s\n", ssid.c_str());
-    if (!Wifi::connect(ssid, password))
+    std::string ssid;
+    std::string password;
+
+
+    printf("Attempting to load wifi credentials from flash...\n");
+    if (Write_Flash::load_credentials(ssid, password))
     {
-      printf("Connect wifi error\n");
-    }
-  } else {
-    printf("The credentials did not match or were not found, setting up access point\n");
-
-    wifi_config.setup_access_point();
-
-    // Initialise web server
-    httpd_init();
-    printf("Http server initialised\n");
-    cgi_init();
-    printf("CGI Handler initialised\n");
-
-    State &state = State::getInstance();
-
-    while (state.switch_cyw43_mode == false)
-    {
-      sys_check_timeouts();
-      cyw43_arch_poll();
-      sleep_ms(100);
-    }
-
-    printf("Switching to STA mode and attempting to load credentials from flash\n");
-
-    if (write_flash.load_credentials(ssid, password)) {
-      printf("Loaded credentials after mode switch, SSID: %s\n", ssid.c_str());
+      printf("Loaded credentials, now trying to connect with them %s\n", ssid.c_str());
       if (!Wifi::connect(ssid, password))
       {
         printf("Connect wifi error\n");
       }
-    } else
-    {
-      printf("Failed to load wifi credentials afte mode switch");
+    } else {
+      printf("The credentials did not match or were not found, setting up access point\n");
+
+      Wifi_Config::setup_access_point();
+
+      // Initialise web server
+      httpd_init();
+      printf("Http server initialised\n");
+      cgi_init();
+      printf("CGI Handler initialised\n");
+
+      State &state = State::getInstance();
+
+      while (state.switch_cyw43_mode == false)
+      {
+        sys_check_timeouts();
+        cyw43_arch_poll();
+        sleep_ms(100);
+      }
+
+      printf("Switching to STA mode and attempting to load credentials from flash\n");
+
+      if (Write_Flash::load_credentials(ssid, password)) {
+        printf("Loaded credentials after mode switch, SSID: %s\n", ssid.c_str());
+        if (!Wifi::connect(ssid, password))
+        {
+          printf("Connect wifi error\n");
+        }
+      } else
+      {
+        printf("Failed to load wifi credentials afte mode switch");
+      }
     }
   }
 
