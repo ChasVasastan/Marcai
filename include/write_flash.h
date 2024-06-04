@@ -2,8 +2,8 @@
 #define WRITE_FLASH_H
 
 #include <string>
-#include "hardware/flash.h"
 
+#include "hardware/flash.h"
 
 struct wifi_credentials
 {

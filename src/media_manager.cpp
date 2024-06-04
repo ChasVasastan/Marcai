@@ -1,15 +1,17 @@
-#include "audio.h"
-#include "ezxml.h"
-#include "http_request.h"
-#include "image.h"
-#include "media_manager.h"
-#include "screen.h"
-#include "spng.h"
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+
+#include "ezxml.h"
+#include "spng.h"
+
+#include "audio.h"
+#include "http_request.h"
+#include "image.h"
+#include "media_manager.h"
+#include "screen.h"
 
 void media_manager::play(http::url url)
 {
@@ -177,7 +179,7 @@ void media_manager::get_album_cover(http::url url) {
         return static_cast<int>(SPNG_IO_ERROR);
       }
 
-      printf("PNG data %ld (%d)...", size, offset);
+      printf("PNG data %ld (%d)...\n", size, offset);
       uint32_t ints = save_and_disable_interrupts();
       int len = req->read(reinterpret_cast<uint8_t*>(dst) + offset,
                           size - offset);

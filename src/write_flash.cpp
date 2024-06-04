@@ -1,9 +1,10 @@
-#include "write_flash.h"
+#include <cstdio>
+#include <cstring>
+
 #include "hardware/flash.h"
 #include "hardware/sync.h"
 
-#include <cstring>
-#include <cstdio>
+#include "write_flash.h"
 
 
 void Write_Flash::save_credentials(const std::string &ssid, const std::string password)
@@ -23,7 +24,6 @@ void Write_Flash::save_credentials(const std::string &ssid, const std::string pa
 
 bool Write_Flash::load_credentials(std::string &ssid, std::string &password)
 {
-  
   char data[FLASH_PAGE_SIZE];
   const uint8_t *flash_target_contents = reinterpret_cast<const uint8_t*>(XIP_BASE + FLASH_TARGET_OFFSET);
   std::memcpy(data, flash_target_contents, FLASH_PAGE_SIZE);

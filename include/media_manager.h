@@ -2,11 +2,11 @@
 #ifndef MARCAI_MEDIA_MANAGER_H
 #define MARCAI_MEDIA_MANAGER_H
 
-#include "http_request.h"
+#include <string>
+
 #include "audio.h"
 #include "screen.h"
-
-#include <string>
+#include "http_request.h"
 
 class media_manager
 {

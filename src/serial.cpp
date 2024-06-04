@@ -1,9 +1,10 @@
-#include "serial.h"
+#include <cstdio>
+#include <string>
+
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 
-#include <cstdio>
-#include <string>
+#include "serial.h"
 
 void Serial::init() {
   uart_init(uart0, 115200);

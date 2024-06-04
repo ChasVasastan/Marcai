@@ -2,11 +2,12 @@
 #ifndef HTTP_REQUEST_H
 #define HTTP_REQUEST_H
 
-#include <functional>
-#include <map>
-#include <vector>
-#include <string>
 #include <cstdint>
+#include <functional>
+#include <vector>
+#include <map>
+#include <string>
+
 
 #include "lwip/ip_addr.h"
 #include "lwip/altcp.h"

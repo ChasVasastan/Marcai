@@ -1,13 +1,14 @@
-#include "wifi_config.h"
-#include "pico/cyw43_arch.h"
-
 #include <stdio.h>
-#include "pico/stdlib.h"
+
+#include "lwip/dhcp.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
-#include "lwip/dhcp.h"
-#include "netif/etharp.h"
 #include "lwip/tcpip.h"
+#include "netif/etharp.h"
+#include "pico/cyw43_arch.h"
+#include "pico/stdlib.h"
+
+#include "wifi_config.h"
 
 void print_ip_address() {
   struct netif *netif = &cyw43_state.netif[CYW43_ITF_AP];
@@ -22,7 +23,6 @@ void print_ip_address() {
 }
 
 void Wifi_Config::setup_access_point() {
-  
   cyw43_arch_enable_ap_mode(WIFI_AP_SSID, WIFI_AP_PASSWORD, CYW43_AUTH_WPA2_AES_PSK);
   printf("Access Point set with name: %s\n", WIFI_AP_SSID);
 

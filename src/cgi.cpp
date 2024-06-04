@@ -1,10 +1,11 @@
-#include "cgi.h"
+#include <stdlib.h>
+#include <string.h>
+
 #include "pico/cyw43_arch.h"
+
+#include "cgi.h"
 #include "state.h"
 #include "write_flash.h"
-
-#include <string.h>
-#include <stdlib.h>
 
 // CGI handler to configure Wi-Fi
 const char *cgi_configure_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]) {

@@ -1,8 +1,8 @@
-#include "wifi.h"
-
 #include "pico/cyw43_arch.h"
 
-  // Function to connec to wifi
+#include "wifi.h"
+
+// Function to connec to wifi
 bool Wifi::connect(std::string ssid, std::string pass)
 {
   cyw43_arch_enable_sta_mode();

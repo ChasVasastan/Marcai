@@ -1,10 +1,11 @@
-#include "screen.h"
-#include "pico/time.h"
-#include "hardware/gpio.h"
 #include <cstdint>
+#include <stdio.h>
+
+#include "hardware/gpio.h"
+#include "pico/time.h"
 #include "st7789_lcd.pio.h"
 
-#include <stdio.h>
+#include "screen.h"
 
 void Screen::init() {
   printf("Screen init start\n");

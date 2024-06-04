@@ -5,10 +5,10 @@
 #define PICO_AUDIO_I2S_CLOCK_PIN_BASE 26
 #define PICO_AUDIO_I2S_DATA_PIN       28
 
+#include <cstdint>
+
 #include "pico/audio.h"
 #include "mp3dec.h"
-
-#include <cstdint>
 
 class Audio {
 public:

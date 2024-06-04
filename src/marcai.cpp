@@ -1,20 +1,20 @@
 #include <stdio.h>
 #include <vector>
 
-#include "pico/stdlib.h"
-#include "pico/cyw43_arch.h"
-#include "lwip/timeouts.h"
-#include "pico/multicore.h"
 #include "lwip/apps/httpd.h"
-#include "lwipopts.h"
+#include "lwip/timeouts.h"
+#include "pico/cyw43_arch.h"
+#include "pico/multicore.h"
+#include "pico/stdlib.h"
 
-#include "media_manager.h"
-#include "wifi.h"
-#include "state.h"
-// #include "serial.h"
-#include "wifi_config.h"
 #include "cgi.h"
+#include "lwipopts.h"
+#include "media_manager.h"
+#include "state.h"
+#include "wifi.h"
+#include "wifi_config.h"
 #include "write_flash.h"
+#include "serial.h"
 
 enum
 {
