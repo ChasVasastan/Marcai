@@ -161,7 +161,7 @@ int main()
       sys_check_timeouts();
       cyw43_arch_poll();
       sleep_ms(100);
-    } 
+    }
 
     printf("Switching to STA mode and attempting to load credentials from flash\n");
 
@@ -171,7 +171,7 @@ int main()
       {
         printf("Connect wifi error\n");
       }
-    } else 
+    } else
     {
       printf("Failed to load wifi credentials afte mode switch");
     }
@@ -189,10 +189,10 @@ int main()
   gpio_set_dir(PIN_BUTTON2, GPIO_IN);
   gpio_pull_up(PIN_BUTTON2);
 
-  gpio_init(PIN_BUTTON3)
+  gpio_init(PIN_BUTTON3);
   gpio_set_dir(PIN_BUTTON3, GPIO_IN);
   gpio_pull_up(PIN_BUTTON3);
-  
+
   gpio_init(PIN_BUTTON4);
   gpio_set_dir(PIN_BUTTON4, GPIO_IN);
   gpio_pull_up(PIN_BUTTON4);

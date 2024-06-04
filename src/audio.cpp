@@ -95,15 +95,3 @@ int Audio::stream_decode(uint8_t *data, int size) {
 
   return info.size;
 }
-
-void Audio::pause() {
-  printf("Audio pause\n");
-  audio_i2s_set_enabled(false);
-  printf("Audio pause done\n");
-}
-
-void Audio::play() {
-  printf("Audio play\n");
-  audio_i2s_set_enabled(true);
-  printf("Audio play done\n");
-}
