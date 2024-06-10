@@ -148,13 +148,9 @@ int main()
 
 
     printf("Attempting to load wifi credentials from flash...\n");
-    if (Write_Flash::load_credentials(ssid, password))
+    if (Write_Flash::load_credentials(ssid, password) && Wifi::connect(ssid, password))
     {
-      printf("Loaded credentials, now trying to connect with them %s\n", ssid.c_str());
-      if (!Wifi::connect(ssid, password))
-      {
-        printf("Connect wifi error\n");
-      }
+      printf("Connected to %s\n", ssid.c_str());
     } else {
       printf("The credentials did not match or were not found, setting up access point\n");
 
