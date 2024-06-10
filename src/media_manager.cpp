@@ -12,6 +12,7 @@
 #include "image.h"
 #include "media_manager.h"
 #include "screen.h"
+#include "state.h"
 
 #include <malloc.h>
 
@@ -139,7 +140,8 @@ void media_manager::play()
     playlist_index = 0;
   }
 
-  http::url url = playlist[playlist_index];
+  State &state = State::getInstance();
+  http::url url = playlist[state.color_picked];
   play(url);
 }
 

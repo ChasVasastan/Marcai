@@ -9,12 +9,12 @@
 
 /**
  * @brief CGI handler that configures and receives input from the website.
- * 
+ *
  * The function is called when a CGI request is made to configure the wifi connection.
  * It receives the enter SSID and password from the request parametes which are linked to the website,
  * After that, it parses it for any spaces in the password and saves the data to the flash memory,
  * and signals to the state machine that it is time to switch from AP to STA mode.
- * 
+ *
  * @param iIndex The index of the CGI handler
  * @param iNumParams The number of parameters passed along in the request
  * @param pcParam Array of parameter names
@@ -52,7 +52,6 @@ const char *cgi_configure_handler(int iIndex, int iNumParams, char *pcParam[], c
         new_ssid[j++] = ssid[i];
     }
     new_ssid[j] = '\0';
-    
 
     // Connect to the Wi-Fi network with the provided SSID and password
     printf("The data entered on the website: SSID: %s, Password: %s\n", new_ssid, password);
@@ -74,7 +73,7 @@ static const tCGI cgi_handlers[] = {
 
 /**
  * @brief Initializes the CGI handlers.
- * 
+ *
  * Sets up the handler for the web server.
 */
 void cgi_init(void) {

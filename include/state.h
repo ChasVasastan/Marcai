@@ -1,6 +1,12 @@
 #ifndef STATE_H
 #define STATE_H
 
+enum colors {
+    Blue,
+    Green,
+    Red,
+};
+
 class State
 {
 public:
@@ -15,6 +21,7 @@ public:
     volatile bool play_song_flag = false;
     volatile bool stop_song_flag = false;
     volatile bool switch_cyw43_mode = false;
+    volatile enum colors color_picked;
 
 private:
     State() = default;

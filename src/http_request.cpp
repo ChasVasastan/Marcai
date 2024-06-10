@@ -158,7 +158,7 @@ void request::send(http::request *req) {
 }
 
 
-  // Function to handle data being transmitted
+// Function to handle data being transmitted
 err_t request::recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err) {
   auto *req = reinterpret_cast<http::request *>(arg);
   uint16_t offset = 0;
@@ -292,24 +292,24 @@ err_t request::altcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t er
 // Function to set up TLS
 void request::tls_tcp_setup(http::request *req, const ip_addr_t *addr)
 {
-    // Set up TLS
-    static struct altcp_tls_config *tls_config = altcp_tls_create_config_client(NULL, 0);
-    struct altcp_pcb *pcb = altcp_tls_new(tls_config, IPADDR_TYPE_ANY);
-    altcp_recv(pcb, recv);
-    altcp_arg(pcb, req);
-    req->pcb = pcb;
+  // Set up TLS
+  static struct altcp_tls_config *tls_config = altcp_tls_create_config_client(NULL, 0);
+  struct altcp_pcb *pcb = altcp_tls_new(tls_config, IPADDR_TYPE_ANY);
+  altcp_recv(pcb, recv);
+  altcp_arg(pcb, req);
+  req->pcb = pcb;
 
-    // Connect to host with TLS/TCP
-    printf("Attempting to connect to %s with IP address %s\n",
-           req->hostname.c_str(), ipaddr_ntoa(addr));
-    auto ctx = reinterpret_cast<mbedtls_ssl_context*>(pcb);
-    mbedtls_ssl_set_hostname(ctx, req->hostname.c_str());
-    err_t err = altcp_connect(pcb, addr, 443, altcp_client_connected);
-    if (err != ERR_OK)
+  // Connect to host with TLS/TCP
+  printf("Attempting to connect to %s with IP address %s\n",
+         req->hostname.c_str(), ipaddr_ntoa(addr));
+  auto ctx = reinterpret_cast<mbedtls_ssl_context*>(pcb);
+  mbedtls_ssl_set_hostname(ctx, req->hostname.c_str());
+  err_t err = altcp_connect(pcb, addr, 443, altcp_client_connected);
+  if (err != ERR_OK)
     {
-        printf("TLS connection failed, error: %d\n", err);
+      printf("TLS connection failed, error: %d\n", err);
     }
-  }
+}
 
 // Callback for DNS lookup
 void request::dns_resolve_callback(const char *name, const ip_addr_t *addr, void *arg)
